@@ -30,6 +30,8 @@
   .mark::after{content:"";width:12px;height:12px;border-radius:50%;background:conic-gradient(from 0deg,#FF5C5C,#FFC24B,#2BE4C6,#8B7CFF,#FF5C5C)}
   header h1{font-size:17px;font-weight:600;letter-spacing:2.5px}
   header span{font-size:12px;color:var(--muted);margin-left:auto}
+  .mute{background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;margin-left:10px;line-height:1}
+  .mute:active{transform:scale(.9)}
 
   main{width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px; align-items:center}
   .rules{font-size:13px; color:var(--muted); line-height:1.5; text-align:center}
@@ -97,6 +99,7 @@
     <h1>HUE</h1>
   </a>
   <span>PLAYNEVIXO.COM · prototype v0.2</span>
+  <button class="mute" id="muteBtn" aria-label="Toggle sound">🔊</button>
 </header>
 
 <main>
@@ -161,7 +164,8 @@
     result: document.getElementById('result'), resultTitle: document.getElementById('resultTitle'),
     resultAcc: document.getElementById('resultAcc'), resultDetail: document.getElementById('resultDetail'),
     streakVal: document.getElementById('streakVal'), shareBtn: document.getElementById('shareBtn'),
-    admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'), adtype: document.getElementById('adtype')
+    admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'), adtype: document.getElementById('adtype'),
+    muteBtn: document.getElementById('muteBtn')
   };
 
   function track(name, params){ if (typeof gtag === 'function') gtag('event', name, params || {}); }
@@ -192,6 +196,57 @@
         adViewed(){ rewarded = true; track('ad_impression', { ad_type: 'rewarded' }); },
         adBreakDone(){ if (rewarded) done(); }
       });
+    }
+  };
+
+  // --- Sound: Web Audio synthesized SFX, no files. Shared across Nevixo games. ---
+  const Sound = {
+    ctx: null, master: null, muted: false,
+    init(){
+      if (this.ctx) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.5;
+        this.master.connect(this.ctx.destination);
+      } catch(e){ this.ctx = null; }
+    },
+    loadMuted(){ try { this.muted = localStorage.getItem('nevixo_muted') === '1'; } catch(e){} },
+    toggle(btn){
+      this.muted = !this.muted;
+      try { localStorage.setItem('nevixo_muted', this.muted ? '1' : '0'); } catch(e){}
+      if (btn) btn.textContent = this.muted ? '🔇' : '🔊';
+    },
+    tone(freq, dur, type, when, vol){
+      if (this.muted) return;
+      this.init(); if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const t0 = this.ctx.currentTime + (when || 0);
+      const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.3, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t0); osc.stop(t0 + dur + 0.03);
+    },
+    blip(freq, dur, type, vol){ this.tone(freq, dur || 0.09, type || 'triangle', 0, vol || 0.25); },
+    arp(freqs, step, dur, type, vol){ freqs.forEach((f, i) => this.tone(f, dur || 0.12, type || 'triangle', i * (step || 0.06), vol || 0.22)); },
+    sweep(f1, f2, dur, type, vol){
+      if (this.muted) return;
+      this.init(); if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const t0 = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+      osc.type = type || 'sawtooth';
+      osc.frequency.setValueAtTime(f1, t0);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, f2), t0 + dur);
+      g.gain.setValueAtTime(vol || 0.3, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t0); osc.stop(t0 + dur + 0.03);
     }
   };
 
@@ -306,6 +361,7 @@
     if (finished || picks.length >= maxPours()) return;
     picks.push(i);
     renderPours(); updateMix(); save();
+    Sound.blip(280 + accuracyOf(mixOf(picks)) * 4.5, 0.1, 'sine', 0.18);
     if (picks.length >= maxPours() && !finished){
       if (!extended){ ui.extend.classList.remove('hidden'); }
     }
@@ -325,6 +381,8 @@
     document.querySelector('.controls').classList.add('hidden');
     ui.extend.classList.add('hidden');
     ui.rules.classList.add('hidden');
+    if (acc >= SOLVE_THRESHOLD) Sound.arp([523, 659, 784, 1047], 0.07, 0.14, 'triangle', 0.2);
+    else Sound.sweep(300, 120, 0.4, 'sawtooth', 0.2);
     ui.resultTitle.textContent = acc >= 97 ? 'Perfect mix!' : acc >= SOLVE_THRESHOLD ? 'Nice mix!' : 'Not quite';
     ui.resultAcc.textContent = acc + '%';
     ui.resultAcc.style.color = acc >= SOLVE_THRESHOLD ? 'var(--accent)' : (acc >= 60 ? 'var(--coin)' : 'var(--danger)');
@@ -350,6 +408,7 @@
   ui.extendBtn.addEventListener('click', () => {
     Ads.rewarded(() => {
       extended = true;
+      Sound.arp([440, 660], 0.05, 0.1, 'triangle', 0.18);
       track('revive_used');
       ui.extend.classList.add('hidden');
       renderPours(); updateMix(); save();
@@ -362,6 +421,9 @@
   });
 
   // --- Init ---
+  Sound.loadMuted();
+  ui.muteBtn.textContent = Sound.muted ? '🔇' : '🔊';
+  ui.muteBtn.addEventListener('click', () => { Sound.toggle(ui.muteBtn); if (!Sound.muted) Sound.blip(600, 0.05, 'sine', 0.14); });
   renderBases();
   try {
     const s = JSON.parse(localStorage.getItem(STATE_KEY));

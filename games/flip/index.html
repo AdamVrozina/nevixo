@@ -37,6 +37,8 @@
   .mark::after{content:"";border-left:10px solid var(--accent);border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px}
   header h1{font-size:17px;font-weight:600;letter-spacing:2.5px}
   header span{font-size:12px;color:var(--muted);margin-left:auto}
+  .mute{background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;margin-left:10px;line-height:1}
+  .mute:active{transform:scale(.9)}
   #stage{position:relative; width:100%; max-width:760px}
   canvas{display:block; width:100%; border-radius:20px; background:var(--field);
     box-shadow:0 0 0 1px #23262E; touch-action:none}
@@ -98,6 +100,7 @@
     <h1>FLIP</h1>
   </a>
   <span>PLAYNEVIXO.COM · prototype v0.2</span>
+  <button class="mute" id="muteBtn" aria-label="Toggle sound">🔊</button>
 </header>
 
 <div id="stage">
@@ -162,7 +165,7 @@
     skinsBtn: document.getElementById('skinsBtn'), menuCoins: document.getElementById('menuCoins'),
     menuBtn: document.getElementById('menuBtn'), skins: document.getElementById('skins'),
     skinCoins: document.getElementById('skinCoins'), skinGrid: document.getElementById('skinGrid'),
-    skinBackBtn: document.getElementById('skinBackBtn')
+    skinBackBtn: document.getElementById('skinBackBtn'), muteBtn: document.getElementById('muteBtn')
   };
   const css = getComputedStyle(document.documentElement);
   const C = n => css.getPropertyValue(n).trim();
@@ -203,6 +206,57 @@
         adViewed(){ rewarded = true; track('ad_impression', { ad_type: 'rewarded' }); },
         adBreakDone(){ if (rewarded) done(); }
       });
+    }
+  };
+
+  // --- Sound: Web Audio synthesized SFX, no files. Shared across Nevixo games. ---
+  const Sound = {
+    ctx: null, master: null, muted: false,
+    init(){
+      if (this.ctx) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.5;
+        this.master.connect(this.ctx.destination);
+      } catch(e){ this.ctx = null; }
+    },
+    loadMuted(){ try { this.muted = localStorage.getItem('nevixo_muted') === '1'; } catch(e){} },
+    toggle(btn){
+      this.muted = !this.muted;
+      try { localStorage.setItem('nevixo_muted', this.muted ? '1' : '0'); } catch(e){}
+      if (btn) btn.textContent = this.muted ? '🔇' : '🔊';
+    },
+    tone(freq, dur, type, when, vol){
+      if (this.muted) return;
+      this.init(); if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const t0 = this.ctx.currentTime + (when || 0);
+      const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.3, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t0); osc.stop(t0 + dur + 0.03);
+    },
+    blip(freq, dur, type, vol){ this.tone(freq, dur || 0.09, type || 'triangle', 0, vol || 0.25); },
+    arp(freqs, step, dur, type, vol){ freqs.forEach((f, i) => this.tone(f, dur || 0.12, type || 'triangle', i * (step || 0.06), vol || 0.22)); },
+    sweep(f1, f2, dur, type, vol){
+      if (this.muted) return;
+      this.init(); if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const t0 = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+      osc.type = type || 'sawtooth';
+      osc.frequency.setValueAtTime(f1, t0);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, f2), t0 + dur);
+      g.gain.setValueAtTime(vol || 0.3, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t0); osc.stop(t0 + dur + 0.03);
     }
   };
 
@@ -286,10 +340,12 @@
   function flip(){
     if (state !== 'playing') return;
     gravDir *= -1;
+    Sound.blip(gravDir > 0 ? 300 : 480, 0.07, 'triangle', 0.2);
   }
 
   function die(){
     state = 'dead'; runCount++;
+    Sound.sweep(320, 70, 0.35, 'sawtooth', 0.26);
     bestDist = Math.max(bestDist, meters());
     save();
     track('game_over', { distance: meters(), coins: runCoins });
@@ -327,7 +383,7 @@
 
     // collisions
     for (const c of coinsArr){
-      if (Math.hypot(c.x - ball.x, c.y - ball.y) < c.r + r){ c.hit = true; runCoins++; }
+      if (Math.hypot(c.x - ball.x, c.y - ball.y) < c.r + r){ c.hit = true; runCoins++; Sound.blip(1180, 0.08, 'square', 0.14); }
     }
     if (invincible <= 0){
       for (const o of obstacles){
@@ -400,6 +456,7 @@
     reset(true); runBanked = false;
     ui.menu.classList.add('hidden'); ui.over.classList.add('hidden'); ui.skins.classList.add('hidden');
     state = 'playing';
+    Sound.blip(520, 0.07, 'sine', 0.16);
     track('game_start');
   }
 
@@ -440,18 +497,20 @@
   ui.skinGrid.addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const buy = btn.dataset.buy, sel = btn.dataset.select, ad = btn.dataset.adunlock;
-    if (sel){ selectedSkin = sel; save(); renderSkins(); }
+    if (sel){ selectedSkin = sel; save(); renderSkins(); Sound.blip(560, 0.05, 'sine', 0.14); }
     else if (buy){
       const skin = SKINS.find(s => s.id === buy);
       if (skin && bank >= skin.price){
         bank -= skin.price; ownedSkins.push(buy); selectedSkin = buy;
         save(); renderSkins();
+        Sound.arp([660, 990], 0.05, 0.1, 'triangle', 0.18);
         track('skin_unlock', { skin: buy, method: 'coins' });
       }
     } else if (ad){
       Ads.rewarded(() => {
         if (!ownedSkins.includes(ad)) ownedSkins.push(ad);
         selectedSkin = ad; save(); renderSkins();
+        Sound.arp([660, 990], 0.05, 0.1, 'triangle', 0.18);
         track('skin_unlock', { skin: ad, method: 'ad' });
       });
     }
@@ -459,6 +518,7 @@
   ui.reviveBtn.addEventListener('click', () => {
     Ads.rewarded(() => {
       usedRevive = true;
+      Sound.arp([440, 660, 880], 0.06, 0.12, 'triangle', 0.2);
       track('revive_used');
       obstacles = obstacles.filter(o => o.x > ball.x + W * 0.5);
       invincible = 1.2;
@@ -479,6 +539,10 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'playing') die(); });
   window.addEventListener('resize', resize);
   window.addEventListener('beforeunload', () => { if (state !== 'menu') bankRun(); });
+
+  Sound.loadMuted();
+  ui.muteBtn.textContent = Sound.muted ? '🔇' : '🔊';
+  ui.muteBtn.addEventListener('click', () => { Sound.toggle(ui.muteBtn); if (!Sound.muted) Sound.blip(600, 0.05, 'sine', 0.14); });
 
   load();
   resize(); reset(true); requestAnimationFrame(loop);
