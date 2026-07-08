@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>FLIP — Nevixo prototype</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YK8LGZ2VRJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-YK8LGZ2VRJ');
+</script>
 <style>
   :root{
     --ink:#F2F2F5; --bg:#0E0F13; --field:#15171D; --bar:#2A2D36;
@@ -117,9 +124,12 @@
   const css = getComputedStyle(document.documentElement);
   const C = n => css.getPropertyValue(n).trim();
 
+  function track(name, params){ if (typeof gtag === 'function') gtag('event', name, params || {}); }
+
   // --- Ad abstraction: swap this object for real SDK calls in production ---
   const Ads = {
     show(type, seconds, done){
+      track('ad_impression', { ad_type: type });
       ui.adtype.textContent = type;
       ui.admodal.style.display = 'flex';
       let t = seconds; ui.adcount.textContent = t;
@@ -186,6 +196,7 @@
   function die(){
     state = 'dead'; runCount++;
     bestDist = Math.max(bestDist, meters());
+    track('game_over', { distance: meters(), coins: runCoins });
     ui.finalScore.textContent = meters();
     ui.finalCoins.textContent = runCoins;
     ui.finalBest.textContent = bestDist;
@@ -278,6 +289,7 @@
     reset(true);
     ui.menu.classList.add('hidden'); ui.over.classList.add('hidden');
     state = 'playing';
+    track('game_start');
   }
 
   // --- Wiring ---
@@ -290,6 +302,7 @@
   ui.reviveBtn.addEventListener('click', () => {
     Ads.rewarded(() => {
       usedRevive = true;
+      track('revive_used');
       obstacles = obstacles.filter(o => o.x > ball.x + W * 0.5);
       invincible = 1.2;
       ui.over.classList.add('hidden');
