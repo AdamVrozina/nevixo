@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>TINY COSMOS — Nevixo prototype</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YK8LGZ2VRJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-YK8LGZ2VRJ');
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3813289053308828" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --ink:#F2F2F5; --bg:#0E0F13; --field:#15171D; --line:#23262E;
+    --accent:#2BE4C6; --violet:#8B7CFF; --coin:#FFC24B; --muted:#8A8F9C;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    display:flex; flex-direction:column; align-items:center;
+    padding:16px; gap:16px; overscroll-behavior:none;
+  }
+  header{display:flex; align-items:center; gap:10px; width:100%; max-width:420px; flex-wrap:wrap}
+  header h1,header span{white-space:nowrap}
+  .mark{width:30px;height:30px;border:2px solid var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none}
+  .mark::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--violet)}
+  header h1{font-size:15px;font-weight:600;letter-spacing:2px}
+  header span{font-size:12px;color:var(--muted);margin-left:auto}
+
+  main{width:100%; max-width:420px; display:flex; flex-direction:column; gap:16px; align-items:center}
+  #stage{position:relative; width:100%; aspect-ratio:1; max-height:320px; border-radius:20px;
+    background:var(--field); border:1px solid var(--line); overflow:hidden}
+  canvas{display:block; width:100%; height:100%}
+  .tap-hint{position:absolute; bottom:12px; left:0; right:0; text-align:center; font-size:11px;
+    color:var(--muted); letter-spacing:.5px; pointer-events:none}
+
+  .info{width:100%; display:flex; flex-direction:column; gap:8px; align-items:center}
+  .stagename{font-size:20px; font-weight:700; letter-spacing:.5px}
+  .count{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .count b{color:var(--coin)}
+  .bar{width:100%; height:8px; border-radius:6px; background:var(--line); overflow:hidden}
+  .bar-fill{height:100%; background:linear-gradient(90deg,var(--violet),var(--accent)); border-radius:6px; transition:width .2s}
+
+  .panel{background:var(--field); border:1px solid var(--line); border-radius:18px; padding:22px;
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; width:100%}
+  .panel h2{font-size:20px; font-weight:700}
+  .panel p{font-size:13px; color:var(--muted); max-width:320px}
+  button{font:inherit; font-size:15px; font-weight:600; border:none; cursor:pointer;
+    padding:13px 26px; border-radius:14px; background:var(--ink); color:#0E0F13; width:100%}
+  button:active{transform:scale(.98)}
+  button.reward{background:var(--accent); color:#06322B}
+  button.ghost{background:transparent; color:var(--muted); border:1px solid var(--line); font-weight:500}
+  .hidden{display:none !important}
+
+  .adtag{font-size:11px; font-weight:500; letter-spacing:.6px; opacity:.8}
+  #admodal{position:fixed; inset:0; background:rgba(22,22,26,.92); z-index:10;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; color:#fff; text-align:center; padding:24px}
+  #admodal .frame{width:min(90%,420px); aspect-ratio:16/9; border:2px dashed rgba(255,255,255,.4);
+    border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px}
+  #admodal h3{font-size:18px; font-weight:600}
+  #admodal small{color:rgba(255,255,255,.6); font-size:13px}
+  #adcount{font-size:30px; font-weight:700}
+
+  footer{font-size:12px; color:var(--muted); max-width:420px; text-align:center; line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../../index.html" style="display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none">
+    <div class="mark" aria-hidden="true"></div>
+    <h1>TINY COSMOS</h1>
+  </a>
+  <span>PLAYNEVIXO.COM · prototype v0.1</span>
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="canvas"></canvas>
+    <div class="tap-hint">TAP TO ADD STARDUST</div>
+  </div>
+
+  <div class="info">
+    <div class="stagename" id="stageName">Particle</div>
+    <div class="count"><b id="stardustVal">0</b> stardust · <span id="rateVal">0.2</span>/s</div>
+    <div class="bar"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="panel hidden" id="away">
+    <h2>While you were away</h2>
+    <p id="awayDetail"></p>
+    <button class="reward" id="doubleBtn">▶ Watch ad to double it <span class="adtag">AD</span></button>
+    <button class="ghost" id="collectBtn">Collect</button>
+  </div>
+
+  <div class="panel hidden" id="complete">
+    <h2>Your universe is complete</h2>
+    <p id="completeDetail"></p>
+    <button id="shareBtn">Copy result to share</button>
+  </div>
+</main>
+
+<footer>Monetization placeholders active: interstitial on completion · rewarded 2x offline growth.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK.</footer>
+
+<div id="admodal">
+  <div class="frame">
+    <h3>AD PLACEHOLDER</h3>
+    <small id="adtype">Interstitial</small>
+    <div id="adcount">3</div>
+  </div>
+  <small>Real ads render here in production. Prototype simulates the wait.</small>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const ui = {
+    stage: document.getElementById('stage'), tapHint: document.querySelector('.tap-hint'),
+    stageName: document.getElementById('stageName'), stardustVal: document.getElementById('stardustVal'),
+    rateVal: document.getElementById('rateVal'), barFill: document.getElementById('barFill'),
+    away: document.getElementById('away'), awayDetail: document.getElementById('awayDetail'),
+    doubleBtn: document.getElementById('doubleBtn'), collectBtn: document.getElementById('collectBtn'),
+    complete: document.getElementById('complete'), completeDetail: document.getElementById('completeDetail'), shareBtn: document.getElementById('shareBtn'),
+    admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'), adtype: document.getElementById('adtype')
+  };
+
+  function track(name, params){ if (typeof gtag === 'function') gtag('event', name, params || {}); }
+
+  window.adsbygoogle = window.adsbygoogle || [];
+  if (typeof adConfig === 'function') adConfig({ preloadAdBreaks: 'on' });
+
+  const Ads = {
+    simulate(type, seconds, done){
+      ui.adtype.textContent = type;
+      ui.admodal.style.display = 'flex';
+      let t = seconds; ui.adcount.textContent = t;
+      const iv = setInterval(() => {
+        t--; ui.adcount.textContent = t;
+        if (t <= 0){ clearInterval(iv); ui.admodal.style.display = 'none'; done(); }
+      }, 1000);
+    },
+    interstitial(done){
+      if (typeof adBreak !== 'function') return this.simulate('Interstitial', 3, done);
+      adBreak({ type: 'next', name: 'cosmos-complete', adBreakDone(){ track('ad_impression', { ad_type: 'interstitial' }); done(); } });
+    },
+    rewarded(done){
+      if (typeof adBreak !== 'function') return this.simulate('Rewarded video', 4, done);
+      let rewarded = false;
+      adBreak({
+        type: 'reward', name: 'cosmos-double-offline',
+        beforeReward(showAdFn){ showAdFn(); },
+        adViewed(){ rewarded = true; track('ad_impression', { ad_type: 'rewarded' }); },
+        adBreakDone(){ if (rewarded) done(); }
+      });
+    }
+  };
+
+  // --- Stages & growth ---
+  const STAGES = [
+    { name: 'Particle', threshold: 0,     rate: 0.2, color: '#8A8F9C', particles: 0 },
+    { name: 'Spark',     threshold: 50,   rate: 1,   color: '#FFC24B', particles: 2 },
+    { name: 'Star',      threshold: 500,  rate: 5,   color: '#FFD98A', particles: 4 },
+    { name: 'Nebula',    threshold: 5000, rate: 20,  color: '#8B7CFF', particles: 8 },
+    { name: 'Galaxy',    threshold: 50000,rate: 80,  color: '#2BE4C6', particles: 14 },
+  ];
+  const COMPLETE_AT = 250000;
+  const OFFLINE_CAP_SEC = 8 * 3600;
+
+  function stageFor(stardust){
+    let s = STAGES[0];
+    for (const st of STAGES){ if (stardust >= st.threshold) s = st; }
+    return s;
+  }
+  function stageIndex(stardust){ return STAGES.indexOf(stageFor(stardust)); }
+  function nextThresholdFor(stardust){
+    const i = stageIndex(stardust);
+    return i < STAGES.length - 1 ? STAGES[i + 1].threshold : COMPLETE_AT;
+  }
+  function simulateGrowth(stardust, seconds){
+    let remaining = seconds;
+    while (remaining > 0 && stardust < COMPLETE_AT){
+      const stage = stageFor(stardust);
+      const next = nextThresholdFor(stardust);
+      const room = next - stardust;
+      const timeToNext = room / stage.rate;
+      if (timeToNext <= remaining){ stardust = next; remaining -= timeToNext; }
+      else { stardust += stage.rate * remaining; remaining = 0; }
+    }
+    return Math.min(stardust, COMPLETE_AT);
+  }
+  function formatNum(n){
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return Math.floor(n).toString();
+  }
+
+  const SAVE_KEY = 'cosmos_save';
+  let stardust = 0, completed = false, startedAt = Date.now();
+  let doubleUsedThisReturn = false;
+
+  function loadSave(){
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e){ return null; }
+  }
+  function save(){
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ stardust, completed, startedAt, lastVisit: Date.now() }));
+  }
+
+  // --- Visuals ---
+  let dpr = 1, W = 0, H = 0;
+  let particles = [];
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  function ensureParticles(count){
+    while (particles.length < count){
+      particles.push({ angle: Math.random() * Math.PI * 2, radius: 0.32 + Math.random() * 0.14, speed: (0.2 + Math.random() * 0.3) * (Math.random() < 0.5 ? 1 : -1), size: 2 + Math.random() * 2 });
+    }
+    particles.length = count;
+  }
+
+  let last = 0, pulse = 0;
+  function draw(ts){
+    const dt = Math.min(0.05, (ts - last) / 1000 || 0);
+    last = ts;
+    pulse += dt;
+    if (!completed) growTick(dt);
+
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2;
+    const stage = stageFor(stardust);
+    const idx = stageIndex(stardust);
+    const nextT = nextThresholdFor(stardust);
+    const span = nextT - stage.threshold;
+    const localProgress = span > 0 ? (stardust - stage.threshold) / span : 1;
+    const baseR = Math.min(W, H) * (0.08 + 0.05 * idx + 0.02 * localProgress);
+    const glow = baseR * (2.2 + Math.sin(pulse * 1.6) * 0.15);
+
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glow);
+    grad.addColorStop(0, stage.color);
+    grad.addColorStop(0.35, stage.color + 'aa');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, glow, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = stage.color;
+    ctx.beginPath(); ctx.arc(cx, cy, baseR, 0, Math.PI * 2); ctx.fill();
+
+    ensureParticles(stage.particles);
+    for (const p of particles){
+      p.angle += p.speed * dt;
+      const r = Math.min(W, H) * p.radius;
+      const x = cx + Math.cos(p.angle) * r, y = cy + Math.sin(p.angle) * r;
+      ctx.fillStyle = '#F2F2F5';
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.arc(x, y, p.size, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    updateInfo(stage, nextT);
+    requestAnimationFrame(draw);
+  }
+
+  function growTick(dt){
+    const stage = stageFor(stardust);
+    stardust = Math.min(COMPLETE_AT, stardust + stage.rate * dt);
+    if (stardust >= COMPLETE_AT && !completed){
+      completed = true;
+      save();
+      track('game_over', { stardust: Math.floor(stardust) });
+      Ads.interstitial(showComplete);
+    }
+  }
+
+  function updateInfo(stage, nextT){
+    ui.stageName.textContent = completed ? 'Universe' : stage.name;
+    ui.stardustVal.textContent = formatNum(stardust);
+    ui.rateVal.textContent = stage.rate;
+    const span = nextT - stage.threshold;
+    const pct = completed ? 100 : Math.min(100, span > 0 ? ((stardust - stage.threshold) / span) * 100 : 100);
+    ui.barFill.style.width = pct + '%';
+  }
+
+  function showComplete(){
+    ui.tapHint.classList.add('hidden');
+    const days = Math.max(1, Math.round((Date.now() - startedAt) / 86400000));
+    ui.completeDetail.textContent = `It took ${days === 1 ? 'about a day' : days + ' days'} to grow your universe from a single particle.`;
+    ui.complete.classList.remove('hidden');
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (completed) return;
+    const stage = stageFor(stardust);
+    stardust = Math.min(COMPLETE_AT, stardust + Math.max(1, stage.rate * 3));
+    save();
+  });
+
+  ui.shareBtn.addEventListener('click', () => {
+    const days = Math.max(1, Math.round((Date.now() - startedAt) / 86400000));
+    const text = `I grew a universe from a single particle in ${days} day${days === 1 ? '' : 's'} on TINY COSMOS.\nplaynevixo.com`;
+    navigator.clipboard.writeText(text).then(() => { ui.shareBtn.textContent = 'Copied ✓'; }).catch(() => { ui.shareBtn.textContent = text; });
+  });
+
+  // --- Offline catch-up ---
+  let pendingOfflineGain = 0;
+  function handleOfflineGain(gain){
+    pendingOfflineGain = gain;
+    ui.awayDetail.textContent = `Your universe kept growing. +${formatNum(gain)} stardust.`;
+    ui.away.classList.remove('hidden');
+  }
+  ui.collectBtn.addEventListener('click', () => {
+    stardust = Math.min(COMPLETE_AT, stardust + pendingOfflineGain);
+    save();
+    ui.away.classList.add('hidden');
+  });
+  ui.doubleBtn.addEventListener('click', () => {
+    Ads.rewarded(() => {
+      track('revive_used');
+      stardust = Math.min(COMPLETE_AT, stardust + pendingOfflineGain * 2);
+      save();
+      ui.away.classList.add('hidden');
+    });
+  });
+
+  // --- Init ---
+  const existing = loadSave();
+  if (existing){
+    stardust = existing.stardust || 0;
+    completed = existing.completed || false;
+    startedAt = existing.startedAt || Date.now();
+    if (!completed && existing.lastVisit){
+      const elapsed = Math.min(OFFLINE_CAP_SEC, (Date.now() - existing.lastVisit) / 1000);
+      if (elapsed > 30){
+        const grown = simulateGrowth(stardust, elapsed);
+        const gain = grown - stardust;
+        if (gain > 0) handleOfflineGain(gain);
+      }
+    }
+  }
+  track('game_start');
+  resize();
+  if (completed) showComplete();
+  requestAnimationFrame(draw);
+  window.addEventListener('beforeunload', save);
+  setInterval(save, 5000);
+})();
+</script>
+</body>
+</html>
