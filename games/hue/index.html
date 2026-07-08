@@ -23,7 +23,7 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:var(--ink);
     display:flex; flex-direction:column; align-items:center;
-    padding:16px; gap:16px;
+    padding:16px; gap:14px;
   }
   header{display:flex; align-items:center; gap:10px; width:100%; max-width:420px}
   .mark{width:30px;height:30px;border:2px solid var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none}
@@ -31,49 +31,47 @@
   header h1{font-size:17px;font-weight:600;letter-spacing:2.5px}
   header span{font-size:12px;color:var(--muted);margin-left:auto}
 
-  main{width:100%; max-width:420px; display:flex; flex-direction:column; gap:16px}
+  main{width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px; align-items:center}
   .rules{font-size:13px; color:var(--muted); line-height:1.5; text-align:center}
   .rules b{color:var(--ink)}
 
-  .swatch{height:140px; border-radius:20px; border:1px solid var(--line); transition:background .08s}
+  .compare{position:relative; width:176px; height:176px; border-radius:50%;
+    overflow:hidden; border:1px solid var(--line); flex:none}
+  .half{position:absolute; top:0; width:50%; height:100%; background:var(--field)}
+  .half.target{left:0}
+  .half.mix{right:0; transition:background-color .45s ease}
+  .cmp-labels{display:flex; justify-content:center; gap:64px; font-size:11px; color:var(--muted); letter-spacing:.5px; margin-top:-6px}
 
-  .sliders{display:flex; flex-direction:column; gap:14px; background:var(--field); border:1px solid var(--line); border-radius:16px; padding:16px}
-  .slider-row{display:flex; flex-direction:column; gap:6px}
-  .slider-row .lbl{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.5px}
-  .slider-row .lbl b{color:var(--ink); font-weight:600}
-  input[type=range]{-webkit-appearance:none; width:100%; height:10px; border-radius:6px; outline:none}
-  #hueSlider{background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)}
-  #satSlider,#lightSlider{background:var(--line)}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%;
-    background:#fff; border:3px solid var(--bg); box-shadow:0 0 0 2px var(--line); cursor:pointer}
-  input[type=range]::-moz-range-thumb{width:22px; height:22px; border-radius:50%;
-    background:#fff; border:3px solid var(--bg); box-shadow:0 0 0 2px var(--line); cursor:pointer}
+  .meter{width:100%; display:flex; flex-direction:column; gap:6px}
+  .meter-top{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.5px}
+  .meter-top b{color:var(--ink); font-size:15px; font-variant-numeric:tabular-nums}
+  .bar{width:100%; height:8px; border-radius:6px; background:var(--line); overflow:hidden}
+  .bar-fill{height:100%; width:0%; border-radius:6px; background:var(--danger); transition:width .4s, background-color .4s}
 
-  button{font:inherit; font-size:15px; font-weight:600; border:none; cursor:pointer;
-    padding:14px 26px; border-radius:14px; background:var(--ink); color:#0E0F13; width:100%}
-  button:active{transform:scale(.98)}
+  .pours{display:flex; gap:8px; justify-content:center}
+  .pour{width:26px; height:26px; border-radius:8px; border:1px dashed var(--line); background:transparent}
+  .pour.filled{border-style:solid; border-color:transparent}
+
+  .bases{display:flex; gap:8px; justify-content:center; width:100%; flex-wrap:wrap}
+  .base{display:flex; flex-direction:column; align-items:center; gap:4px; border:none; background:none; cursor:pointer; padding:0}
+  .base .dot{width:44px; height:44px; border-radius:50%; border:1px solid var(--line); transition:transform .1s}
+  .base:active .dot{transform:scale(.9)}
+  .base .nm{font-size:10px; color:var(--muted); letter-spacing:.3px}
+  .base:disabled{opacity:.4; pointer-events:none}
+
+  .controls{width:100%; display:flex; gap:10px}
+  button.act{font:inherit; font-size:15px; font-weight:600; border:none; cursor:pointer;
+    padding:13px 26px; border-radius:14px; background:var(--ink); color:#0E0F13; flex:1}
+  button.act:active{transform:scale(.98)}
+  button.act:disabled{opacity:.35; pointer-events:none}
   button.reward{background:var(--accent); color:#06322B}
-  button.ghost{background:transparent; color:var(--muted); font-weight:500; border:1px solid var(--line)}
-  button:disabled{opacity:.35; pointer-events:none}
+  button.ghost{background:transparent; color:var(--muted); border:1px solid var(--line); font-weight:500}
 
-  .history{display:flex; flex-direction:column; gap:8px}
-  .guess-row{display:flex; align-items:center; gap:10px; background:var(--field); border:1px solid var(--line); border-radius:12px; padding:8px 10px}
-  .guess-row .sw{width:34px; height:34px; border-radius:8px; flex:none; border:1px solid var(--line)}
-  .guess-row .chips{display:flex; gap:6px; flex:1}
-  .chip{flex:1; display:flex; align-items:center; justify-content:center; gap:3px;
-    border-radius:8px; font-size:12px; font-weight:700; padding:7px 4px; color:#06322B}
-  .chip.hit{background:var(--accent)}
-  .chip.close{background:var(--coin)}
-  .chip.far{background:var(--line); color:var(--muted)}
-  .chip .arrow{font-size:13px}
-
-  .panel{background:var(--field); border:1px solid var(--line); border-radius:18px; padding:22px; text-align:center;
-    display:flex; flex-direction:column; align-items:center; gap:12px}
+  .panel{background:var(--field); border:1px solid var(--line); border-radius:18px; padding:22px;
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; width:100%}
   .panel h2{font-size:22px; font-weight:700}
-  .panel .reveal{display:flex; gap:14px; align-items:center; justify-content:center}
-  .reveal .sw{width:56px; height:56px; border-radius:12px; border:1px solid var(--line)}
-  .reveal .vs{color:var(--muted); font-size:12px}
-  .panel p{font-size:13px; color:var(--muted)}
+  .panel .big{font-size:40px; font-weight:800; letter-spacing:-1px; font-variant-numeric:tabular-nums}
+  .panel p{font-size:13px; color:var(--muted); max-width:320px}
   .streak{font-size:13px; color:var(--muted)}
   .streak b{color:var(--coin); font-size:16px}
   .hidden{display:none !important}
@@ -98,61 +96,49 @@
     <div class="mark" aria-hidden="true"></div>
     <h1>HUE</h1>
   </a>
-  <span>PLAYNEVIXO.COM · prototype v0.1</span>
+  <span>PLAYNEVIXO.COM · prototype v0.2</span>
 </header>
 
 <main>
-  <p class="rules" id="rules">Match today's color in <b>5 tries</b>. After each guess, arrows show whether the target is warmer/cooler, more/less saturated, lighter/darker.</p>
+  <p class="rules" id="rules">Pour colors into your mix to match today's color. <b>5 pours</b>, fewer is better.</p>
 
-  <div class="swatch" id="preview"></div>
+  <div class="compare">
+    <div class="half target" id="targetHalf"></div>
+    <div class="half mix" id="mixHalf"></div>
+  </div>
+  <div class="cmp-labels"><span>Target</span><span>Your mix</span></div>
 
-  <div class="sliders" id="sliders">
-    <div class="slider-row">
-      <div class="lbl"><span>HUE</span><b id="hueVal">180</b></div>
-      <input type="range" id="hueSlider" min="0" max="359" value="180">
-    </div>
-    <div class="slider-row">
-      <div class="lbl"><span>SATURATION</span><b id="satVal">50%</b></div>
-      <input type="range" id="satSlider" min="0" max="100" value="50">
-    </div>
-    <div class="slider-row">
-      <div class="lbl"><span>LIGHTNESS</span><b id="lightVal">50%</b></div>
-      <input type="range" id="lightSlider" min="0" max="100" value="50">
-    </div>
+  <div class="meter">
+    <div class="meter-top"><span>MATCH</span><b id="accVal">—</b></div>
+    <div class="bar"><div class="bar-fill" id="accFill"></div></div>
   </div>
 
-  <button id="guessBtn">Guess (1/5)</button>
+  <div class="pours" id="pours"></div>
 
-  <div class="history" id="history"></div>
+  <div class="bases" id="bases"></div>
 
-  <div class="panel hidden" id="result">
-    <h2 id="resultTitle">Solved!</h2>
-    <div class="reveal">
-      <div>
-        <div class="sw" id="revealTarget"></div>
-        <div class="vs">Target</div>
-      </div>
-      <div style="color:var(--muted)">vs</div>
-      <div>
-        <div class="sw" id="revealGuess"></div>
-        <div class="vs">Your best</div>
-      </div>
-    </div>
-    <p id="resultDetail"></p>
-    <div class="streak">Current streak: <b id="streakVal">0</b></div>
-    <button id="shareBtn">Copy result to share</button>
-    <p style="font-size:12px; color:var(--muted); margin-top:2px">New color tomorrow. Until then, try <a href="../flip/index.html" style="color:var(--accent)">FLIP</a> or head <a href="../../index.html" style="color:var(--accent)">back to Nevixo</a>.</p>
+  <div class="controls">
+    <button class="act" id="doneBtn" disabled>Done</button>
   </div>
 
   <div class="panel hidden" id="extend">
-    <h2>Out of guesses</h2>
-    <p>Watch an ad for one more try?</p>
-    <button class="reward" id="extendBtn">▶ Watch ad for one more guess <span class="adtag">AD</span></button>
-    <button class="ghost" id="revealBtn">No thanks, reveal the answer</button>
+    <h2>Out of pours</h2>
+    <p>Watch an ad for one more pour to fine-tune your mix?</p>
+    <button class="act reward" id="extendBtn">▶ Watch ad for one more pour <span class="adtag">AD</span></button>
+    <button class="act ghost" id="settleBtn">No thanks, settle for this</button>
+  </div>
+
+  <div class="panel hidden" id="result">
+    <h2 id="resultTitle">Nice mix!</h2>
+    <div class="big" id="resultAcc">0%</div>
+    <p id="resultDetail"></p>
+    <div class="streak">Current streak: <b id="streakVal">0</b></div>
+    <button class="act" id="shareBtn">Copy result to share</button>
+    <p style="font-size:12px; margin-top:2px">New color tomorrow. Until then, try <a href="../flip/index.html" style="color:var(--accent)">FLIP</a> or head <a href="../../index.html" style="color:var(--accent)">back to Nevixo</a>.</p>
   </div>
 </main>
 
-<footer>Monetization placeholders active: interstitial on finish · rewarded extra guess.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK.</footer>
+<footer>Monetization placeholders active: interstitial on finish · rewarded extra pour.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK.</footer>
 
 <div id="admodal">
   <div class="frame">
@@ -166,14 +152,15 @@
 <script>
 (() => {
   const ui = {
-    preview: document.getElementById('preview'),
-    hueSlider: document.getElementById('hueSlider'), satSlider: document.getElementById('satSlider'), lightSlider: document.getElementById('lightSlider'),
-    hueVal: document.getElementById('hueVal'), satVal: document.getElementById('satVal'), lightVal: document.getElementById('lightVal'),
-    guessBtn: document.getElementById('guessBtn'), history: document.getElementById('history'), sliders: document.getElementById('sliders'),
-    result: document.getElementById('result'), resultTitle: document.getElementById('resultTitle'), resultDetail: document.getElementById('resultDetail'),
-    revealTarget: document.getElementById('revealTarget'), revealGuess: document.getElementById('revealGuess'),
+    rules: document.getElementById('rules'),
+    targetHalf: document.getElementById('targetHalf'), mixHalf: document.getElementById('mixHalf'),
+    accVal: document.getElementById('accVal'), accFill: document.getElementById('accFill'),
+    pours: document.getElementById('pours'), bases: document.getElementById('bases'),
+    doneBtn: document.getElementById('doneBtn'),
+    extend: document.getElementById('extend'), extendBtn: document.getElementById('extendBtn'), settleBtn: document.getElementById('settleBtn'),
+    result: document.getElementById('result'), resultTitle: document.getElementById('resultTitle'),
+    resultAcc: document.getElementById('resultAcc'), resultDetail: document.getElementById('resultDetail'),
     streakVal: document.getElementById('streakVal'), shareBtn: document.getElementById('shareBtn'),
-    extend: document.getElementById('extend'), extendBtn: document.getElementById('extendBtn'), revealBtn: document.getElementById('revealBtn'),
     admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'), adtype: document.getElementById('adtype')
   };
 
@@ -200,7 +187,7 @@
       if (typeof adBreak !== 'function') return this.simulate('Rewarded video', 4, done);
       let rewarded = false;
       adBreak({
-        type: 'reward', name: 'hue-extra-guess',
+        type: 'reward', name: 'hue-extra-pour',
         beforeReward(showAdFn){ showAdFn(); },
         adViewed(){ rewarded = true; track('ad_impression', { ad_type: 'rewarded' }); },
         adBreakDone(){ if (rewarded) done(); }
@@ -208,10 +195,35 @@
     }
   };
 
-  // --- Daily puzzle ---
-  const LAUNCH_DATE = Date.UTC(2026, 6, 8);
+  // --- Palette & mixing ---
+  const BASES = [
+    { name:'Crimson', r:229, g:72,  b:77  },
+    { name:'Amber',   r:245, g:166, b:35  },
+    { name:'Lemon',   r:245, g:217, b:10  },
+    { name:'Jade',    r:48,  g:164, b:108 },
+    { name:'Azure',   r:62,  g:123, b:250 },
+    { name:'Grape',   r:139, g:92,  b:246 }
+  ];
+  const EMPTY = { r:21, g:23, b:29 };
+  const DMAX = Math.sqrt(3) * 255;
+
+  function mixOf(picks){
+    if (!picks.length) return EMPTY;
+    let r=0,g=0,b=0;
+    for (const i of picks){ r+=BASES[i].r; g+=BASES[i].g; b+=BASES[i].b; }
+    return { r:r/picks.length, g:g/picks.length, b:b/picks.length };
+  }
+  function rgbStr(c){ return `rgb(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)})`; }
+  function dist(a,b){ return Math.sqrt((a.r-b.r)**2 + (a.g-b.g)**2 + (a.b-b.b)**2); }
+  function accuracyOf(mix){ return Math.max(0, Math.round(100 * (1 - dist(mix, target) / DMAX))); }
+
+  // --- Daily deterministic target ---
   function todayKey(){ return new Date().toISOString().slice(0,10); }
-  function dayNumber(){ return Math.floor((Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) - LAUNCH_DATE) / 86400000) + 1; }
+  const LAUNCH = Date.UTC(2026, 6, 8);
+  function dayNumber(){
+    const n = new Date();
+    return Math.floor((Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) - LAUNCH) / 86400000) + 1;
+  }
   function mulberry32(seed){
     return function(){
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -225,160 +237,142 @@
     for (let i = 0; i < str.length; i++){ h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
     return h;
   }
-  function todaysTarget(){
-    const rand = mulberry32(seedFromString('hue-' + todayKey()));
-    return { h: Math.floor(rand() * 360), s: Math.round(40 + rand() * 50), l: Math.round(28 + rand() * 42) };
-  }
-  const target = todaysTarget();
+  const rand = mulberry32(seedFromString('hue-mix-' + todayKey()));
+  const k = 2 + Math.floor(rand() * 3);          // 2..4 ingredients
+  const targetPicks = [];
+  for (let i = 0; i < k; i++) targetPicks.push(Math.floor(rand() * 6));
+  if (new Set(targetPicks).size < 2) targetPicks[0] = (targetPicks[0] + 1) % 6;
+  const target = mixOf(targetPicks);
 
-  const MAX_GUESSES = 5;
-  let guesses = [];
-  let extended = false;
-  let finished = false;
+  const MAX_POURS = 5;
+  let picks = [], finished = false, extended = false;
+  const STATE_KEY = 'hue_mix_' + todayKey();
+  const STREAK_KEY = 'hue_streak', STREAK_DATE_KEY = 'hue_streak_date';
+  const SOLVE_THRESHOLD = 85;
 
-  const STATE_KEY = 'hue_progress_' + todayKey();
-  const STREAK_KEY = 'hue_streak';
-  const STREAK_DATE_KEY = 'hue_streak_date';
+  function maxPours(){ return MAX_POURS + (extended ? 1 : 0); }
 
-  function hsl(c){ return `hsl(${c.h}, ${c.s}%, ${c.l}%)`; }
+  // --- Render ---
+  ui.targetHalf.style.background = rgbStr(target);
 
-  function updatePreview(){
-    const c = { h: +ui.hueSlider.value, s: +ui.satSlider.value, l: +ui.lightSlider.value };
-    ui.preview.style.background = hsl(c);
-    ui.hueVal.textContent = c.h;
-    ui.satVal.textContent = c.s + '%';
-    ui.lightVal.textContent = c.l + '%';
-  }
-  ui.hueSlider.addEventListener('input', updatePreview);
-  ui.satSlider.addEventListener('input', updatePreview);
-  ui.lightSlider.addEventListener('input', updatePreview);
-
-  function hueDist(a, b){ const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
-  function hueDir(guess, tgt){ const d = ((tgt - guess + 540) % 360) - 180; return d > 0 ? 1 : (d < 0 ? -1 : 0); }
-  function tier(dist, hitT, closeT){ return dist <= hitT ? 'hit' : (dist <= closeT ? 'close' : 'far'); }
-
-  function scoreGuess(g){
-    const hd = hueDist(g.h, target.h), sd = Math.abs(g.s - target.s), ld = Math.abs(g.l - target.l);
-    const ht = tier(hd, 8, 25), st = tier(sd, 8, 18), lt = tier(ld, 8, 18);
-    return {
-      h: { tier: ht, dir: hueDir(g.h, target.h) },
-      s: { tier: st, dir: target.s - g.s > 0 ? 1 : (target.s - g.s < 0 ? -1 : 0) },
-      l: { tier: lt, dir: target.l - g.l > 0 ? 1 : (target.l - g.l < 0 ? -1 : 0) },
-      solved: ht === 'hit' && st === 'hit' && lt === 'hit'
-    };
+  function renderBases(){
+    ui.bases.innerHTML = BASES.map((b, i) =>
+      `<button class="base" data-base="${i}" aria-label="${b.name}">
+        <span class="dot" style="background:${rgbStr(b)}"></span>
+        <span class="nm">${b.name}</span>
+      </button>`).join('');
   }
 
-  function chipHtml(dim, label){
-    const arrow = dim.tier === 'hit' ? '' : (label === 'H' ? (dim.dir > 0 ? '+' : '−') : (dim.dir > 0 ? '↑' : '↓'));
-    return `<div class="chip ${dim.tier}">${label}<span class="arrow">${arrow}</span></div>`;
+  function renderPours(){
+    let html = '';
+    for (let i = 0; i < maxPours(); i++){
+      if (picks[i] != null) html += `<div class="pour filled" style="background:${rgbStr(BASES[picks[i]])}"></div>`;
+      else html += `<div class="pour"></div>`;
+    }
+    ui.pours.innerHTML = html;
   }
 
-  function renderHistory(){
-    ui.history.innerHTML = guesses.map(g => `
-      <div class="guess-row">
-        <div class="sw" style="background:${hsl(g.color)}"></div>
-        <div class="chips">${chipHtml(g.score.h,'H')}${chipHtml(g.score.s,'S')}${chipHtml(g.score.l,'L')}</div>
-      </div>`).join('');
+  function updateMix(){
+    const mix = mixOf(picks);
+    ui.mixHalf.style.background = rgbStr(mix);
+    if (picks.length){
+      const acc = accuracyOf(mix);
+      ui.accVal.textContent = acc + '%';
+      ui.accFill.style.width = acc + '%';
+      ui.accFill.style.background = acc >= SOLVE_THRESHOLD ? 'var(--accent)' : (acc >= 60 ? 'var(--coin)' : 'var(--danger)');
+    } else {
+      ui.accVal.textContent = '—';
+      ui.accFill.style.width = '0%';
+    }
+    ui.doneBtn.disabled = picks.length === 0 || finished;
   }
 
-  function saveState(){
-    localStorage.setItem(STATE_KEY, JSON.stringify({ guesses, finished, won: guesses.some(g => g.score.solved), extended }));
-  }
-  function loadState(){
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (!raw) return false;
-      const s = JSON.parse(raw);
-      guesses = s.guesses || []; finished = s.finished; extended = s.extended;
-      renderHistory();
-      return true;
-    } catch(e){ return false; }
+  function save(){
+    try { localStorage.setItem(STATE_KEY, JSON.stringify({ picks, finished, extended })); } catch(e){}
   }
 
-  function updateStreak(won){
-    const last = localStorage.getItem(STREAK_DATE_KEY);
+  function updateStreak(solved){
     const today = todayKey();
-    if (last === today) return +localStorage.getItem(STREAK_KEY) || 0;
+    if (localStorage.getItem(STREAK_DATE_KEY) === today) return +localStorage.getItem(STREAK_KEY) || 0;
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
     let streak = +localStorage.getItem(STREAK_KEY) || 0;
-    streak = won ? (last === yesterday ? streak + 1 : 1) : 0;
+    streak = solved ? (localStorage.getItem(STREAK_DATE_KEY) === yesterday ? streak + 1 : 1) : 0;
     localStorage.setItem(STREAK_KEY, streak);
     localStorage.setItem(STREAK_DATE_KEY, today);
     return streak;
   }
 
-  function endGame(){
+  function pour(i){
+    if (finished || picks.length >= maxPours()) return;
+    picks.push(i);
+    renderPours(); updateMix(); save();
+    if (picks.length >= maxPours() && !finished){
+      if (!extended){ ui.extend.classList.remove('hidden'); }
+    }
+  }
+
+  function finish(){
     finished = true;
-    saveState();
-    const won = guesses.some(g => g.score.solved);
-    const best = guesses.reduce((a,b) => (scoreDistance(a) < scoreDistance(b) ? a : b));
-    track('game_over', { solved: won, tries: guesses.length });
-    Ads.interstitial(() => showResult(won, best));
+    save();
+    const acc = accuracyOf(mixOf(picks));
+    const solved = acc >= SOLVE_THRESHOLD;
+    track('game_over', { accuracy: acc, pours: picks.length });
+    Ads.interstitial(() => showResult(acc, solved));
   }
 
-  function scoreDistance(g){
-    return hueDist(g.color.h, target.h) + Math.abs(g.color.s - target.s) + Math.abs(g.color.l - target.l);
-  }
-
-  function showResult(won, best){
-    ui.sliders.classList.add('hidden'); ui.guessBtn.classList.add('hidden'); ui.extend.classList.add('hidden');
-    ui.revealTarget.style.background = hsl(target);
-    ui.revealGuess.style.background = hsl(best.color);
-    ui.resultTitle.textContent = won ? 'Solved!' : 'So close!';
-    ui.resultDetail.textContent = won
-      ? `You matched today's HUE in ${guesses.length}/${MAX_GUESSES} tries.`
-      : `You ran out of tries. Here's how close you got.`;
-    ui.streakVal.textContent = updateStreak(won);
+  function showResult(acc, solved){
+    document.querySelector('.bases').classList.add('hidden');
+    document.querySelector('.controls').classList.add('hidden');
+    ui.extend.classList.add('hidden');
+    ui.rules.classList.add('hidden');
+    ui.resultTitle.textContent = acc >= 97 ? 'Perfect mix!' : acc >= SOLVE_THRESHOLD ? 'Nice mix!' : 'Not quite';
+    ui.resultAcc.textContent = acc + '%';
+    ui.resultAcc.style.color = acc >= SOLVE_THRESHOLD ? 'var(--accent)' : (acc >= 60 ? 'var(--coin)' : 'var(--danger)');
+    ui.resultDetail.textContent = `You matched today's color to ${acc}% in ${picks.length} pour${picks.length === 1 ? '' : 's'}.`;
+    ui.streakVal.textContent = updateStreak(solved);
     ui.result.classList.remove('hidden');
   }
 
-  ui.guessBtn.addEventListener('click', () => {
-    if (finished) return;
-    const color = { h: +ui.hueSlider.value, s: +ui.satSlider.value, l: +ui.lightSlider.value };
-    const score = scoreGuess(color);
-    guesses.push({ color, score });
-    renderHistory();
-    saveState();
-    const max = MAX_GUESSES + (extended ? 1 : 0);
-    if (score.solved){
-      endGame();
-    } else if (guesses.length >= max){
-      if (!extended){ ui.extend.classList.remove('hidden'); ui.guessBtn.classList.add('hidden'); }
-      else { endGame(); }
-    } else {
-      ui.guessBtn.textContent = `Guess (${guesses.length + 1}/${max})`;
-    }
-  });
+  function shareText(){
+    const acc = accuracyOf(mixOf(picks));
+    const green = Math.floor(acc / 20), rem = acc - green * 20, yellow = rem >= 10 ? 1 : 0;
+    const bar = '🟩'.repeat(green) + '🟨'.repeat(yellow) + '⬛'.repeat(Math.max(0, 5 - green - yellow));
+    return `HUE #${dayNumber()}\n${acc}% match · ${picks.length} pour${picks.length === 1 ? '' : 's'}\n${bar}\nplaynevixo.com`;
+  }
 
+  // --- Wiring ---
+  ui.bases.addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    pour(+btn.dataset.base);
+  });
+  ui.doneBtn.addEventListener('click', finish);
+  ui.settleBtn.addEventListener('click', finish);
   ui.extendBtn.addEventListener('click', () => {
     Ads.rewarded(() => {
       extended = true;
       track('revive_used');
-      saveState();
-      ui.extend.classList.add('hidden'); ui.guessBtn.classList.remove('hidden');
-      ui.guessBtn.textContent = `Guess (${guesses.length + 1}/${MAX_GUESSES + 1})`;
+      ui.extend.classList.add('hidden');
+      renderPours(); updateMix(); save();
     });
   });
-  ui.revealBtn.addEventListener('click', endGame);
-
   ui.shareBtn.addEventListener('click', () => {
-    const won = guesses.some(g => g.score.solved);
-    const grid = guesses.map(g => ['h','s','l'].map(k => g.score[k].tier === 'hit' ? '🟩' : g.score[k].tier === 'close' ? '🟨' : '⬛').join('')).join('\n');
-    const text = `HUE #${dayNumber()} ${won ? guesses.length : 'X'}/${MAX_GUESSES}\n${grid}\nplaynevixo.com`;
-    navigator.clipboard.writeText(text).then(() => {
-      ui.shareBtn.textContent = 'Copied ✓';
-    }).catch(() => { ui.shareBtn.textContent = text; });
+    navigator.clipboard.writeText(shareText())
+      .then(() => { ui.shareBtn.textContent = 'Copied ✓'; })
+      .catch(() => { ui.shareBtn.textContent = shareText(); });
   });
 
-  updatePreview();
+  // --- Init ---
+  renderBases();
+  try {
+    const s = JSON.parse(localStorage.getItem(STATE_KEY));
+    if (s){ picks = s.picks || []; finished = s.finished || false; extended = s.extended || false; }
+  } catch(e){}
+  renderPours(); updateMix();
   track('game_start');
-  if (loadState() && finished){
-    const won = guesses.some(g => g.score.solved);
-    const best = guesses.reduce((a,b) => (scoreDistance(a) < scoreDistance(b) ? a : b));
-    ui.sliders.classList.add('hidden'); ui.guessBtn.classList.add('hidden');
-    showResult(won, best);
-  } else if (guesses.length){
-    ui.guessBtn.textContent = `Guess (${guesses.length + 1}/${MAX_GUESSES + (extended ? 1 : 0)})`;
+  if (finished){
+    showResult(accuracyOf(mixOf(picks)), accuracyOf(mixOf(picks)) >= SOLVE_THRESHOLD);
+  } else if (picks.length >= maxPours() && !extended){
+    ui.extend.classList.remove('hidden');
   }
 })();
 </script>
