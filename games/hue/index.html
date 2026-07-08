@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>HUE — Nevixo prototype</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YK8LGZ2VRJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-YK8LGZ2VRJ');
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3813289053308828" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --ink:#F2F2F5; --bg:#0E0F13; --field:#15171D; --line:#23262E;
+    --accent:#2BE4C6; --violet:#8B7CFF; --coin:#FFC24B; --danger:#FF5C5C; --muted:#8A8F9C;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    display:flex; flex-direction:column; align-items:center;
+    padding:16px; gap:16px;
+  }
+  header{display:flex; align-items:center; gap:10px; width:100%; max-width:420px}
+  .mark{width:30px;height:30px;border:2px solid var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none}
+  .mark::after{content:"";width:12px;height:12px;border-radius:50%;background:conic-gradient(from 0deg,#FF5C5C,#FFC24B,#2BE4C6,#8B7CFF,#FF5C5C)}
+  header h1{font-size:17px;font-weight:600;letter-spacing:2.5px}
+  header span{font-size:12px;color:var(--muted);margin-left:auto}
+
+  main{width:100%; max-width:420px; display:flex; flex-direction:column; gap:16px}
+  .rules{font-size:13px; color:var(--muted); line-height:1.5; text-align:center}
+  .rules b{color:var(--ink)}
+
+  .swatch{height:140px; border-radius:20px; border:1px solid var(--line); transition:background .08s}
+
+  .sliders{display:flex; flex-direction:column; gap:14px; background:var(--field); border:1px solid var(--line); border-radius:16px; padding:16px}
+  .slider-row{display:flex; flex-direction:column; gap:6px}
+  .slider-row .lbl{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.5px}
+  .slider-row .lbl b{color:var(--ink); font-weight:600}
+  input[type=range]{-webkit-appearance:none; width:100%; height:10px; border-radius:6px; outline:none}
+  #hueSlider{background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)}
+  #satSlider,#lightSlider{background:var(--line)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+    background:#fff; border:3px solid var(--bg); box-shadow:0 0 0 2px var(--line); cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:22px; height:22px; border-radius:50%;
+    background:#fff; border:3px solid var(--bg); box-shadow:0 0 0 2px var(--line); cursor:pointer}
+
+  button{font:inherit; font-size:15px; font-weight:600; border:none; cursor:pointer;
+    padding:14px 26px; border-radius:14px; background:var(--ink); color:#0E0F13; width:100%}
+  button:active{transform:scale(.98)}
+  button.reward{background:var(--accent); color:#06322B}
+  button.ghost{background:transparent; color:var(--muted); font-weight:500; border:1px solid var(--line)}
+  button:disabled{opacity:.35; pointer-events:none}
+
+  .history{display:flex; flex-direction:column; gap:8px}
+  .guess-row{display:flex; align-items:center; gap:10px; background:var(--field); border:1px solid var(--line); border-radius:12px; padding:8px 10px}
+  .guess-row .sw{width:34px; height:34px; border-radius:8px; flex:none; border:1px solid var(--line)}
+  .guess-row .chips{display:flex; gap:6px; flex:1}
+  .chip{flex:1; display:flex; align-items:center; justify-content:center; gap:3px;
+    border-radius:8px; font-size:12px; font-weight:700; padding:7px 4px; color:#06322B}
+  .chip.hit{background:var(--accent)}
+  .chip.close{background:var(--coin)}
+  .chip.far{background:var(--line); color:var(--muted)}
+  .chip .arrow{font-size:13px}
+
+  .panel{background:var(--field); border:1px solid var(--line); border-radius:18px; padding:22px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:12px}
+  .panel h2{font-size:22px; font-weight:700}
+  .panel .reveal{display:flex; gap:14px; align-items:center; justify-content:center}
+  .reveal .sw{width:56px; height:56px; border-radius:12px; border:1px solid var(--line)}
+  .reveal .vs{color:var(--muted); font-size:12px}
+  .panel p{font-size:13px; color:var(--muted)}
+  .streak{font-size:13px; color:var(--muted)}
+  .streak b{color:var(--coin); font-size:16px}
+  .hidden{display:none !important}
+
+  .adtag{font-size:11px; font-weight:500; letter-spacing:.6px; opacity:.8}
+  #admodal{position:fixed; inset:0; background:rgba(22,22,26,.92); z-index:10;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; color:#fff; text-align:center; padding:24px}
+  #admodal .frame{width:min(90%,420px); aspect-ratio:16/9; border:2px dashed rgba(255,255,255,.4);
+    border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px}
+  #admodal h3{font-size:18px; font-weight:600}
+  #admodal small{color:rgba(255,255,255,.6); font-size:13px}
+  #adcount{font-size:30px; font-weight:700}
+
+  footer{font-size:12px; color:var(--muted); max-width:420px; text-align:center; line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark" aria-hidden="true"></div>
+  <h1>HUE</h1>
+  <span>PLAYNEVIXO.COM · prototype v0.1</span>
+</header>
+
+<main>
+  <p class="rules" id="rules">Match today's color in <b>5 tries</b>. After each guess, arrows show whether the target is warmer/cooler, more/less saturated, lighter/darker.</p>
+
+  <div class="swatch" id="preview"></div>
+
+  <div class="sliders" id="sliders">
+    <div class="slider-row">
+      <div class="lbl"><span>HUE</span><b id="hueVal">180</b></div>
+      <input type="range" id="hueSlider" min="0" max="359" value="180">
+    </div>
+    <div class="slider-row">
+      <div class="lbl"><span>SATURATION</span><b id="satVal">50%</b></div>
+      <input type="range" id="satSlider" min="0" max="100" value="50">
+    </div>
+    <div class="slider-row">
+      <div class="lbl"><span>LIGHTNESS</span><b id="lightVal">50%</b></div>
+      <input type="range" id="lightSlider" min="0" max="100" value="50">
+    </div>
+  </div>
+
+  <button id="guessBtn">Guess (1/5)</button>
+
+  <div class="history" id="history"></div>
+
+  <div class="panel hidden" id="result">
+    <h2 id="resultTitle">Solved!</h2>
+    <div class="reveal">
+      <div>
+        <div class="sw" id="revealTarget"></div>
+        <div class="vs">Target</div>
+      </div>
+      <div style="color:var(--muted)">vs</div>
+      <div>
+        <div class="sw" id="revealGuess"></div>
+        <div class="vs">Your best</div>
+      </div>
+    </div>
+    <p id="resultDetail"></p>
+    <div class="streak">Current streak: <b id="streakVal">0</b></div>
+    <button id="shareBtn">Copy result to share</button>
+  </div>
+
+  <div class="panel hidden" id="extend">
+    <h2>Out of guesses</h2>
+    <p>Watch an ad for one more try?</p>
+    <button class="reward" id="extendBtn">▶ Watch ad for one more guess <span class="adtag">AD</span></button>
+    <button class="ghost" id="revealBtn">No thanks, reveal the answer</button>
+  </div>
+</main>
+
+<footer>Monetization placeholders active: interstitial on finish · rewarded extra guess.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK.</footer>
+
+<div id="admodal">
+  <div class="frame">
+    <h3>AD PLACEHOLDER</h3>
+    <small id="adtype">Interstitial</small>
+    <div id="adcount">3</div>
+  </div>
+  <small>Real ads render here in production. Prototype simulates the wait.</small>
+</div>
+
+<script>
+(() => {
+  const ui = {
+    preview: document.getElementById('preview'),
+    hueSlider: document.getElementById('hueSlider'), satSlider: document.getElementById('satSlider'), lightSlider: document.getElementById('lightSlider'),
+    hueVal: document.getElementById('hueVal'), satVal: document.getElementById('satVal'), lightVal: document.getElementById('lightVal'),
+    guessBtn: document.getElementById('guessBtn'), history: document.getElementById('history'), sliders: document.getElementById('sliders'),
+    result: document.getElementById('result'), resultTitle: document.getElementById('resultTitle'), resultDetail: document.getElementById('resultDetail'),
+    revealTarget: document.getElementById('revealTarget'), revealGuess: document.getElementById('revealGuess'),
+    streakVal: document.getElementById('streakVal'), shareBtn: document.getElementById('shareBtn'),
+    extend: document.getElementById('extend'), extendBtn: document.getElementById('extendBtn'), revealBtn: document.getElementById('revealBtn'),
+    admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'), adtype: document.getElementById('adtype')
+  };
+
+  function track(name, params){ if (typeof gtag === 'function') gtag('event', name, params || {}); }
+
+  window.adsbygoogle = window.adsbygoogle || [];
+  if (typeof adConfig === 'function') adConfig({ preloadAdBreaks: 'on' });
+
+  const Ads = {
+    simulate(type, seconds, done){
+      ui.adtype.textContent = type;
+      ui.admodal.style.display = 'flex';
+      let t = seconds; ui.adcount.textContent = t;
+      const iv = setInterval(() => {
+        t--; ui.adcount.textContent = t;
+        if (t <= 0){ clearInterval(iv); ui.admodal.style.display = 'none'; done(); }
+      }, 1000);
+    },
+    interstitial(done){
+      if (typeof adBreak !== 'function') return this.simulate('Interstitial', 3, done);
+      adBreak({ type: 'next', name: 'hue-finish', adBreakDone(){ track('ad_impression', { ad_type: 'interstitial' }); done(); } });
+    },
+    rewarded(done){
+      if (typeof adBreak !== 'function') return this.simulate('Rewarded video', 4, done);
+      let rewarded = false;
+      adBreak({
+        type: 'reward', name: 'hue-extra-guess',
+        beforeReward(showAdFn){ showAdFn(); },
+        adViewed(){ rewarded = true; track('ad_impression', { ad_type: 'rewarded' }); },
+        adBreakDone(){ if (rewarded) done(); }
+      });
+    }
+  };
+
+  // --- Daily puzzle ---
+  const LAUNCH_DATE = Date.UTC(2026, 6, 8);
+  function todayKey(){ return new Date().toISOString().slice(0,10); }
+  function dayNumber(){ return Math.floor((Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) - LAUNCH_DATE) / 86400000) + 1; }
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function seedFromString(str){
+    let h = 0;
+    for (let i = 0; i < str.length; i++){ h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
+    return h;
+  }
+  function todaysTarget(){
+    const rand = mulberry32(seedFromString('hue-' + todayKey()));
+    return { h: Math.floor(rand() * 360), s: Math.round(40 + rand() * 50), l: Math.round(28 + rand() * 42) };
+  }
+  const target = todaysTarget();
+
+  const MAX_GUESSES = 5;
+  let guesses = [];
+  let extended = false;
+  let finished = false;
+
+  const STATE_KEY = 'hue_progress_' + todayKey();
+  const STREAK_KEY = 'hue_streak';
+  const STREAK_DATE_KEY = 'hue_streak_date';
+
+  function hsl(c){ return `hsl(${c.h}, ${c.s}%, ${c.l}%)`; }
+
+  function updatePreview(){
+    const c = { h: +ui.hueSlider.value, s: +ui.satSlider.value, l: +ui.lightSlider.value };
+    ui.preview.style.background = hsl(c);
+    ui.hueVal.textContent = c.h;
+    ui.satVal.textContent = c.s + '%';
+    ui.lightVal.textContent = c.l + '%';
+  }
+  ui.hueSlider.addEventListener('input', updatePreview);
+  ui.satSlider.addEventListener('input', updatePreview);
+  ui.lightSlider.addEventListener('input', updatePreview);
+
+  function hueDist(a, b){ const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
+  function hueDir(guess, tgt){ const d = ((tgt - guess + 540) % 360) - 180; return d > 0 ? 1 : (d < 0 ? -1 : 0); }
+  function tier(dist, hitT, closeT){ return dist <= hitT ? 'hit' : (dist <= closeT ? 'close' : 'far'); }
+
+  function scoreGuess(g){
+    const hd = hueDist(g.h, target.h), sd = Math.abs(g.s - target.s), ld = Math.abs(g.l - target.l);
+    const ht = tier(hd, 8, 25), st = tier(sd, 8, 18), lt = tier(ld, 8, 18);
+    return {
+      h: { tier: ht, dir: hueDir(g.h, target.h) },
+      s: { tier: st, dir: target.s - g.s > 0 ? 1 : (target.s - g.s < 0 ? -1 : 0) },
+      l: { tier: lt, dir: target.l - g.l > 0 ? 1 : (target.l - g.l < 0 ? -1 : 0) },
+      solved: ht === 'hit' && st === 'hit' && lt === 'hit'
+    };
+  }
+
+  function chipHtml(dim, label){
+    const arrow = dim.tier === 'hit' ? '' : (label === 'H' ? (dim.dir > 0 ? '+' : '−') : (dim.dir > 0 ? '↑' : '↓'));
+    return `<div class="chip ${dim.tier}">${label}<span class="arrow">${arrow}</span></div>`;
+  }
+
+  function renderHistory(){
+    ui.history.innerHTML = guesses.map(g => `
+      <div class="guess-row">
+        <div class="sw" style="background:${hsl(g.color)}"></div>
+        <div class="chips">${chipHtml(g.score.h,'H')}${chipHtml(g.score.s,'S')}${chipHtml(g.score.l,'L')}</div>
+      </div>`).join('');
+  }
+
+  function saveState(){
+    localStorage.setItem(STATE_KEY, JSON.stringify({ guesses, finished, won: guesses.some(g => g.score.solved), extended }));
+  }
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      guesses = s.guesses || []; finished = s.finished; extended = s.extended;
+      renderHistory();
+      return true;
+    } catch(e){ return false; }
+  }
+
+  function updateStreak(won){
+    const last = localStorage.getItem(STREAK_DATE_KEY);
+    const today = todayKey();
+    if (last === today) return +localStorage.getItem(STREAK_KEY) || 0;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+    let streak = +localStorage.getItem(STREAK_KEY) || 0;
+    streak = won ? (last === yesterday ? streak + 1 : 1) : 0;
+    localStorage.setItem(STREAK_KEY, streak);
+    localStorage.setItem(STREAK_DATE_KEY, today);
+    return streak;
+  }
+
+  function endGame(){
+    finished = true;
+    saveState();
+    const won = guesses.some(g => g.score.solved);
+    const best = guesses.reduce((a,b) => (scoreDistance(a) < scoreDistance(b) ? a : b));
+    track('game_over', { solved: won, tries: guesses.length });
+    Ads.interstitial(() => showResult(won, best));
+  }
+
+  function scoreDistance(g){
+    return hueDist(g.color.h, target.h) + Math.abs(g.color.s - target.s) + Math.abs(g.color.l - target.l);
+  }
+
+  function showResult(won, best){
+    ui.sliders.classList.add('hidden'); ui.guessBtn.classList.add('hidden'); ui.extend.classList.add('hidden');
+    ui.revealTarget.style.background = hsl(target);
+    ui.revealGuess.style.background = hsl(best.color);
+    ui.resultTitle.textContent = won ? 'Solved!' : 'So close!';
+    ui.resultDetail.textContent = won
+      ? `You matched today's HUE in ${guesses.length}/${MAX_GUESSES} tries.`
+      : `You ran out of tries. Here's how close you got.`;
+    ui.streakVal.textContent = updateStreak(won);
+    ui.result.classList.remove('hidden');
+  }
+
+  ui.guessBtn.addEventListener('click', () => {
+    if (finished) return;
+    const color = { h: +ui.hueSlider.value, s: +ui.satSlider.value, l: +ui.lightSlider.value };
+    const score = scoreGuess(color);
+    guesses.push({ color, score });
+    renderHistory();
+    saveState();
+    const max = MAX_GUESSES + (extended ? 1 : 0);
+    if (score.solved){
+      endGame();
+    } else if (guesses.length >= max){
+      if (!extended){ ui.extend.classList.remove('hidden'); ui.guessBtn.classList.add('hidden'); }
+      else { endGame(); }
+    } else {
+      ui.guessBtn.textContent = `Guess (${guesses.length + 1}/${max})`;
+    }
+  });
+
+  ui.extendBtn.addEventListener('click', () => {
+    Ads.rewarded(() => {
+      extended = true;
+      track('revive_used');
+      saveState();
+      ui.extend.classList.add('hidden'); ui.guessBtn.classList.remove('hidden');
+      ui.guessBtn.textContent = `Guess (${guesses.length + 1}/${MAX_GUESSES + 1})`;
+    });
+  });
+  ui.revealBtn.addEventListener('click', endGame);
+
+  ui.shareBtn.addEventListener('click', () => {
+    const won = guesses.some(g => g.score.solved);
+    const grid = guesses.map(g => ['h','s','l'].map(k => g.score[k].tier === 'hit' ? '🟩' : g.score[k].tier === 'close' ? '🟨' : '⬛').join('')).join('\n');
+    const text = `HUE #${dayNumber()} ${won ? guesses.length : 'X'}/${MAX_GUESSES}\n${grid}\nplaynevixo.com`;
+    navigator.clipboard.writeText(text).then(() => {
+      ui.shareBtn.textContent = 'Copied ✓';
+    }).catch(() => { ui.shareBtn.textContent = text; });
+  });
+
+  updatePreview();
+  track('game_start');
+  if (loadState() && finished){
+    const won = guesses.some(g => g.score.solved);
+    const best = guesses.reduce((a,b) => (scoreDistance(a) < scoreDistance(b) ? a : b));
+    ui.sliders.classList.add('hidden'); ui.guessBtn.classList.add('hidden');
+    showResult(won, best);
+  } else if (guesses.length){
+    ui.guessBtn.textContent = `Guess (${guesses.length + 1}/${MAX_GUESSES + (extended ? 1 : 0)})`;
+  }
+})();
+</script>
+</body>
+</html>
