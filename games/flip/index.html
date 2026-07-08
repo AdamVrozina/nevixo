@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>FLIP — Nevixo prototype</title>
+<style>
+  :root{
+    --ink:#F2F2F5; --bg:#0E0F13; --field:#15171D; --bar:#2A2D36;
+    --accent:#2BE4C6; --violet:#8B7CFF; --coin:#FFC24B; --danger:#FF5C5C; --muted:#8A8F9C;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    display:flex; flex-direction:column; align-items:center;
+    padding:16px; gap:12px; overscroll-behavior:none;
+  }
+  header{display:flex; align-items:center; gap:10px; width:100%; max-width:760px}
+  .mark{width:30px;height:30px;border:2px solid var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center}
+  .mark::after{content:"";border-left:10px solid var(--accent);border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px}
+  header h1{font-size:17px;font-weight:600;letter-spacing:2.5px}
+  header span{font-size:12px;color:var(--muted);margin-left:auto}
+  #stage{position:relative; width:100%; max-width:760px}
+  canvas{display:block; width:100%; border-radius:20px; background:var(--field);
+    box-shadow:0 0 0 1px #23262E; touch-action:none}
+  .hud{position:absolute; top:14px; left:18px; right:18px; display:flex;
+    justify-content:space-between; pointer-events:none; font-size:14px; font-weight:600}
+  .hud .right{color:var(--muted); font-weight:500; display:flex; gap:14px}
+  .hud .coins{color:var(--coin)}
+  .panel{position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px; text-align:center;
+    background:rgba(14,15,19,.86); border-radius:20px; padding:24px}
+  .panel h2{font-size:26px; font-weight:700; letter-spacing:-.5px}
+  .panel p{font-size:14px; color:var(--muted); max-width:300px; line-height:1.5}
+  .stats{display:flex; gap:26px; font-size:14px; color:var(--muted)}
+  .stats b{display:block; font-size:22px; color:var(--ink)}
+  button{font:inherit; font-size:15px; font-weight:600; border:none; cursor:pointer;
+    padding:12px 26px; border-radius:14px; background:var(--ink); color:#0E0F13}
+  button:active{transform:scale(.97)}
+  button.reward{background:var(--accent); color:#06322B}
+  button.ghost{background:transparent; color:var(--muted); font-weight:500; padding:6px}
+  button:disabled{opacity:.35; pointer-events:none}
+  .adtag{font-size:11px; font-weight:500; letter-spacing:.6px; opacity:.8}
+  #admodal{position:fixed; inset:0; background:rgba(22,22,26,.92); z-index:10;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; color:#fff; text-align:center; padding:24px}
+  #admodal .frame{width:min(90%,420px); aspect-ratio:16/9; border:2px dashed rgba(255,255,255,.4);
+    border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px}
+  #admodal h3{font-size:18px; font-weight:600}
+  #admodal small{color:rgba(255,255,255,.6); font-size:13px}
+  #adcount{font-size:30px; font-weight:700}
+  footer{font-size:12px; color:var(--muted); max-width:760px; text-align:center; line-height:1.6}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark" aria-hidden="true"></div>
+  <h1>FLIP</h1>
+  <span>NEVIXO · prototype v0.2</span>
+</header>
+
+<div id="stage">
+  <canvas id="game"></canvas>
+  <div class="hud">
+    <div id="score">0 m</div>
+    <div class="right"><span class="coins" id="coins">◉ 0</span><span id="best">Best 0 m</span></div>
+  </div>
+
+  <div class="panel" id="menu">
+    <h2>FLIP</h2>
+    <p>Tap, click or press Space to flip gravity. Dodge the blocks, grab the coins, go far.</p>
+    <button id="startBtn">Play</button>
+  </div>
+
+  <div class="panel hidden" id="over">
+    <h2>Crashed</h2>
+    <div class="stats">
+      <div><b id="finalScore">0</b>meters</div>
+      <div><b id="finalCoins">0</b>coins</div>
+      <div><b id="finalBest">0</b>best</div>
+    </div>
+    <button class="reward" id="reviveBtn">▶ Watch ad to revive <span class="adtag">AD</span></button>
+    <button class="reward" id="doubleBtn">▶ Double coins <span class="adtag">AD</span></button>
+    <button id="againBtn">Play again</button>
+  </div>
+</div>
+
+<footer>Monetization placeholders active: interstitial every 2nd run · rewarded revive · rewarded coin doubler.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK. Progress saving arrives with the live version.</footer>
+
+<div id="admodal">
+  <div class="frame">
+    <h3>AD PLACEHOLDER</h3>
+    <small id="adtype">Interstitial</small>
+    <div id="adcount">3</div>
+  </div>
+  <small>Real ads render here in production. Prototype simulates the wait.</small>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const ui = {
+    score: document.getElementById('score'), coins: document.getElementById('coins'),
+    best: document.getElementById('best'), menu: document.getElementById('menu'),
+    over: document.getElementById('over'), finalScore: document.getElementById('finalScore'),
+    finalCoins: document.getElementById('finalCoins'), finalBest: document.getElementById('finalBest'),
+    reviveBtn: document.getElementById('reviveBtn'), doubleBtn: document.getElementById('doubleBtn'),
+    againBtn: document.getElementById('againBtn'), startBtn: document.getElementById('startBtn'),
+    admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'),
+    adtype: document.getElementById('adtype')
+  };
+  const css = getComputedStyle(document.documentElement);
+  const C = n => css.getPropertyValue(n).trim();
+
+  // --- Ad abstraction: swap this object for real SDK calls in production ---
+  const Ads = {
+    show(type, seconds, done){
+      ui.adtype.textContent = type;
+      ui.admodal.style.display = 'flex';
+      let t = seconds; ui.adcount.textContent = t;
+      const iv = setInterval(() => {
+        t--; ui.adcount.textContent = t;
+        if (t <= 0){ clearInterval(iv); ui.admodal.style.display = 'none'; done(); }
+      }, 1000);
+    },
+    interstitial(done){ this.show('Interstitial', 3, done); },
+    rewarded(done){ this.show('Rewarded video', 4, done); }
+  };
+
+  // --- State ---
+  let W = 0, H = 0, dpr = 1, pad = 12, barTh = 6;
+  let state = 'menu';               // menu | playing | dead
+  let ball, speed, dist, runCoins, obstacles, coinsArr, nextObst, gravDir;
+  let bestDist = 0, bank = 0, runCount = 0, usedRevive = false, usedDouble = false;
+  let invincible = 0, last = 0;
+
+  const BASE_SPEED = 300, MAX_SPEED = 700, ACCEL = 7;
+  const GRAV = 3300, MAX_VY = 1300;
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth;
+    H = Math.max(300, Math.min(Math.round(W * 0.56), Math.round(window.innerHeight * 0.62)));
+    canvas.style.height = H + 'px';
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (ball){ ball.x = W * 0.26; ball.y = clampY(ball.y); }
+  }
+  const floorY = () => H - pad - barTh;
+  const ceilY  = () => pad + barTh;
+  function clampY(y){ const r = ballR(); return Math.min(Math.max(y, ceilY() + r), floorY() - r); }
+  const ballR = () => Math.max(10, Math.round(H * 0.032));
+
+  function reset(fullRun){
+    if (fullRun){ dist = 0; runCoins = 0; usedRevive = false; usedDouble = false; speed = BASE_SPEED; }
+    obstacles = []; coinsArr = []; nextObst = W * 0.9; gravDir = 1;
+    ball = { x: W * 0.26, y: floorY() - ballR(), vy: 0, rot: 0 };
+  }
+
+  function spawnObstacle(){
+    const r = ballR();
+    const onFloor = Math.random() < 0.5;
+    const h = H * (0.14 + Math.random() * 0.16);
+    const w = Math.max(22, H * 0.055);
+    const y = onFloor ? floorY() - h : ceilY();
+    obstacles.push({ x: W + w, y, w, h, top: !onFloor });
+    // fair spacing: player needs time to cross + flip
+    const flipT = Math.sqrt(2 * (floorY() - ceilY() - 2 * r) / GRAV);
+    nextObst = speed * (flipT + 0.55 + Math.random() * 0.5);
+    if (Math.random() < 0.35){
+      const cy = onFloor ? ceilY() + r * 2.2 : floorY() - r * 2.2;
+      for (let i = 0; i < 3; i++) coinsArr.push({ x: W + w + 60 + i * 34, y: cy, r: Math.max(7, H*0.018), hit:false });
+    }
+  }
+
+  function flip(){
+    if (state !== 'playing') return;
+    gravDir *= -1;
+  }
+
+  function die(){
+    state = 'dead'; runCount++;
+    bestDist = Math.max(bestDist, meters());
+    ui.finalScore.textContent = meters();
+    ui.finalCoins.textContent = runCoins;
+    ui.finalBest.textContent = bestDist;
+    ui.reviveBtn.disabled = usedRevive;
+    ui.doubleBtn.disabled = usedDouble || runCoins === 0;
+    ui.over.classList.remove('hidden');
+  }
+
+  const meters = () => Math.floor(dist / 40);
+
+  function update(dt){
+    speed = Math.min(MAX_SPEED, speed + ACCEL * dt);
+    const dx = speed * dt;
+    dist += dx;
+    if (invincible > 0) invincible -= dt;
+
+    ball.vy += GRAV * gravDir * dt;
+    ball.vy = Math.max(-MAX_VY, Math.min(MAX_VY, ball.vy));
+    ball.y += ball.vy * dt;
+    const r = ballR();
+    if (ball.y > floorY() - r){ ball.y = floorY() - r; ball.vy = 0; }
+    if (ball.y < ceilY() + r){ ball.y = ceilY() + r; ball.vy = 0; }
+    ball.rot += (dx / r) * (ball.y > H/2 ? 1 : -1);
+
+    nextObst -= dx;
+    if (nextObst <= 0) spawnObstacle();
+
+    for (const o of obstacles) o.x -= dx;
+    for (const c of coinsArr) c.x -= dx;
+    obstacles = obstacles.filter(o => o.x + o.w > -20);
+    coinsArr = coinsArr.filter(c => c.x > -20 && !c.hit);
+
+    // collisions
+    for (const c of coinsArr){
+      if (Math.hypot(c.x - ball.x, c.y - ball.y) < c.r + r){ c.hit = true; runCoins++; }
+    }
+    if (invincible <= 0){
+      for (const o of obstacles){
+        const cx = Math.max(o.x, Math.min(ball.x, o.x + o.w));
+        const cy = Math.max(o.y, Math.min(ball.y, o.y + o.h));
+        if (Math.hypot(cx - ball.x, cy - ball.y) < r * 0.92){ die(); return; }
+      }
+    }
+    ui.score.textContent = meters() + ' m';
+    ui.coins.textContent = '◉ ' + (bank + runCoins);
+    ui.best.textContent = 'Best ' + Math.max(bestDist, meters()) + ' m';
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = C('--bar');
+    ctx.beginPath(); roundRect(pad, pad, W - pad*2, barTh, 3); ctx.fill();
+    ctx.beginPath(); roundRect(pad, H - pad - barTh, W - pad*2, barTh, 3); ctx.fill();
+
+    for (const o of obstacles){
+      ctx.fillStyle = C(o.top ? '--violet' : '--accent');
+      ctx.beginPath(); roundRect(o.x, o.y, o.w, o.h, 6); ctx.fill();
+    }
+
+    ctx.fillStyle = C('--coin');
+    for (const c of coinsArr){ ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, 7); ctx.fill(); }
+
+    const r = ballR();
+    const blink = invincible > 0 && Math.floor(invincible * 10) % 2 === 0;
+    ctx.globalAlpha = blink ? 0.35 : 1;
+    ctx.fillStyle = C('--ink');
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, r, 0, 7); ctx.fill();
+    ctx.fillStyle = C('--field');
+    const a = ball.rot;
+    ctx.beginPath(); ctx.arc(ball.x + Math.cos(a) * r * 0.5, ball.y + Math.sin(a) * r * 0.5, r * 0.18, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function roundRect(x, y, w, h, rr){
+    rr = Math.min(rr, w/2, h/2);
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr); ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr); ctx.arcTo(x, y, x+w, y, rr);
+  }
+
+  function loop(ts){
+    const dt = Math.min(0.033, (ts - last) / 1000 || 0);
+    last = ts;
+    if (state === 'playing') update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function startRun(){
+    reset(true);
+    ui.menu.classList.add('hidden'); ui.over.classList.add('hidden');
+    state = 'playing';
+  }
+
+  // --- Wiring ---
+  ui.startBtn.addEventListener('click', startRun);
+  ui.againBtn.addEventListener('click', () => {
+    bank += runCoins;
+    const go = () => startRun();
+    (runCount % 2 === 0) ? Ads.interstitial(go) : go();   // interstitial every 2nd run
+  });
+  ui.reviveBtn.addEventListener('click', () => {
+    Ads.rewarded(() => {
+      usedRevive = true;
+      obstacles = obstacles.filter(o => o.x > ball.x + W * 0.5);
+      invincible = 1.2;
+      ui.over.classList.add('hidden');
+      state = 'playing';
+    });
+  });
+  ui.doubleBtn.addEventListener('click', () => {
+    Ads.rewarded(() => { runCoins *= 2; usedDouble = true;
+      ui.finalCoins.textContent = runCoins; ui.doubleBtn.disabled = true;
+      ui.coins.textContent = '◉ ' + (bank + runCoins);
+    });
+  });
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); flip(); });
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space'){ e.preventDefault(); state === 'menu' ? startRun() : flip(); }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'playing') die(); });
+  window.addEventListener('resize', resize);
+
+  resize(); reset(true); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

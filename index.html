@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nevixo — instant browser games</title>
+<meta name="description" content="Original browser games by Nevixo. No downloads, no sign-up — press play.">
+<style>
+  :root{
+    --bg:#0E0F13; --panel:#15171D; --line:#23262E; --ink:#F2F2F5;
+    --muted:#8A8F9C; --accent:#2BE4C6; --violet:#8B7CFF; --coin:#FFC24B;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6}
+  a{color:inherit; text-decoration:none}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 20px}
+
+  header{border-bottom:1px solid var(--line)}
+  .nav{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:24px; height:68px}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:600; letter-spacing:3px; font-size:15px}
+  .mark{width:28px;height:28px;border:2px solid var(--accent);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .mark::after{content:"";border-left:9px solid var(--accent);border-top:5.5px solid transparent;border-bottom:5.5px solid transparent;margin-left:2px}
+  nav ul{display:flex; gap:22px; list-style:none; justify-content:flex-end; font-size:14px; color:var(--muted)}
+  nav a:hover{color:var(--ink)}
+
+  .hero{display:grid; grid-template-columns:1.1fr .9fr; gap:32px; align-items:center; padding:56px 0}
+  .hero h1{font-size:clamp(30px,4.5vw,46px); font-weight:700; letter-spacing:-.5px; line-height:1.15}
+  .hero h1 em{font-style:normal; color:var(--accent)}
+  .hero p{color:var(--muted); margin:14px 0 24px; max-width:420px}
+  .btn{display:inline-block; background:var(--accent); color:#06322B; font-weight:600;
+    padding:13px 30px; border-radius:14px; font-size:15px}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:transparent; color:var(--muted); border:1px solid var(--line); margin-left:10px}
+  .heroArt{background:var(--panel); border:1px solid var(--line); border-radius:20px;
+    border-top:3px solid var(--violet); border-bottom:3px solid var(--accent);
+    height:240px; position:relative; overflow:hidden}
+  .heroArt .dot{position:absolute; width:26px;height:26px;border-radius:50%;background:var(--ink); top:64%; left:24%}
+  .heroArt .ob{position:absolute; width:26px; border-radius:7px}
+  .heroArt .o1{height:80px; background:var(--accent); bottom:0; left:52%}
+  .heroArt .o2{height:64px; background:var(--violet); top:0; left:72%}
+  .heroArt .c{position:absolute; width:14px;height:14px;border-radius:50%;background:var(--coin); top:26%; left:38%}
+  .heroArt .c2{left:44%} .heroArt .c3{left:50%}
+
+  .adslot{background:var(--panel); border:1px dashed var(--line); border-radius:12px;
+    display:flex; align-items:center; justify-content:center; color:var(--muted);
+    font-size:12px; letter-spacing:1px; height:96px; margin:8px 0 40px}
+
+  h2{font-size:22px; font-weight:600; margin-bottom:18px}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; margin-bottom:56px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:18px; overflow:hidden;
+    display:flex; flex-direction:column; transition:transform .15s}
+  .card:hover{transform:translateY(-3px)}
+  .thumb{height:140px; position:relative; border-bottom:1px solid var(--line)}
+  .card .body{padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1}
+  .card h3{font-size:16px; font-weight:600}
+  .card p{font-size:13px; color:var(--muted); flex:1}
+  .row{display:flex; align-items:center; justify-content:space-between; margin-top:8px}
+  .tag{font-size:11px; letter-spacing:1px; color:var(--accent); border:1px solid var(--accent);
+    border-radius:99px; padding:2px 10px}
+  .tag.soon{color:var(--violet); border-color:var(--violet)}
+  .play{font-size:14px; font-weight:600; color:var(--accent)}
+
+  footer{border-top:1px solid var(--line); padding:32px 0 44px; color:var(--muted); font-size:13px}
+  .foot{display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start}
+  .foot ul{list-style:none; display:flex; gap:18px}
+  .news{display:flex; gap:8px; margin-top:12px; max-width:360px}
+  .news input{flex:1; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    color:var(--ink); padding:10px 12px; font:inherit; font-size:14px}
+  .news button{background:var(--ink); color:#0E0F13; border:none; border-radius:10px;
+    padding:10px 16px; font:inherit; font-weight:600; cursor:pointer}
+  @media(max-width:760px){
+    .hero{grid-template-columns:1fr; padding:36px 0}
+    .heroArt{height:180px}
+    .foot{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#"><span class="mark" aria-hidden="true"></span>NEVIXO</a>
+    <nav><ul>
+      <li><a href="#games">Games</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Instant games.<br><em>Zero downloads.</em></h1>
+      <p>Original browser games built for one thing: pressing play and having fun in the next three seconds. On any device.</p>
+      <a class="btn" href="./games/flip/index.html">Play FLIP</a>
+      <a class="btn ghost" href="#games">Browse games</a>
+    </div>
+    <div class="heroArt" aria-hidden="true">
+      <div class="dot"></div><div class="ob o1"></div><div class="ob o2"></div>
+      <div class="c"></div><div class="c c2"></div><div class="c c3"></div>
+    </div>
+  </section>
+
+  <div class="adslot">AD PLACEHOLDER · RESPONSIVE LEADERBOARD</div>
+
+  <section id="games">
+    <h2>All games</h2>
+    <div class="grid" id="gamegrid"></div>
+  </section>
+</main>
+
+<footer id="about">
+  <div class="wrap foot">
+    <div>
+      <strong style="color:var(--ink)">Nevixo</strong> — a small studio making original instant games for the open web.
+      <div class="news" id="contact">
+        <input type="email" placeholder="you@email.com" aria-label="Email for updates">
+        <button type="button" onclick="this.previousElementSibling.value='';this.textContent='Done ✓'">Get updates</button>
+      </div>
+    </div>
+    <ul>
+      <li><a href="./privacy.html">Privacy</a></li>
+      <li><a href="./terms.html">Terms</a></li>
+      <li><a href="#">For partners</a></li>
+    </ul>
+  </div>
+  <div class="wrap" style="margin-top:18px">© 2026 Nevixo · playnevixo.com</div>
+</footer>
+
+<script>
+  // Adding a game to the hub = adding one object here. Nothing else changes.
+  const GAMES = [
+    { id:'flip', title:'FLIP', desc:'One-tap gravity arcade. Dodge, flip, go far.',
+      tag:'PLAY NOW', soon:false, url:'./games/flip/index.html',
+      art:'<div style="position:absolute;inset:0;background:#101218"><div style="position:absolute;width:20px;height:64px;border-radius:6px;background:var(--accent);bottom:0;left:58%"></div><div style="position:absolute;width:20px;height:48px;border-radius:6px;background:var(--violet);top:0;left:78%"></div><div style="position:absolute;width:20px;height:20px;border-radius:50%;background:var(--ink);top:58%;left:22%"></div><div style="position:absolute;width:10px;height:10px;border-radius:50%;background:var(--coin);top:24%;left:38%"></div></div>' },
+    { id:'hue', title:'HUE', desc:'A new color to mix every day. Five moves. Share your streak.',
+      tag:'COMING SOON', soon:true, url:null,
+      art:'<div style="position:absolute;inset:0;background:#101218;display:flex;align-items:center;justify-content:center"><div style="width:44px;height:44px;border-radius:50%;background:#378ADD;opacity:.85;margin-right:-14px"></div><div style="width:44px;height:44px;border-radius:50%;background:#D4537E;opacity:.85;margin-right:-14px"></div><div style="width:44px;height:44px;border-radius:50%;background:#EF9F27;opacity:.85"></div></div>' },
+    { id:'cosmos', title:'TINY COSMOS', desc:'Grow a universe from a single particle. It plays while you rest.',
+      tag:'COMING SOON', soon:true, url:null,
+      art:'<div style="position:absolute;inset:0;background:#101218;display:flex;align-items:center;justify-content:center"><div style="width:70px;height:70px;border:1px solid var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative"><div style="width:34px;height:34px;border:1px solid var(--violet);border-radius:50%"></div><div style="position:absolute;top:-5px;left:30px;width:10px;height:10px;border-radius:50%;background:var(--accent)"></div><div style="position:absolute;bottom:6px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--coin)"></div></div></div>' }
+  ];
+
+  document.getElementById('gamegrid').innerHTML = GAMES.map(g => `
+    <${g.url ? `a href="${g.url}"` : 'div'} class="card">
+      <div class="thumb">${g.art}</div>
+      <div class="body">
+        <h3>${g.title}</h3>
+        <p>${g.desc}</p>
+        <div class="row">
+          <span class="tag${g.soon ? ' soon' : ''}">${g.tag}</span>
+          ${g.url ? '<span class="play">Play ▸</span>' : ''}
+        </div>
+      </div>
+    </${g.url ? 'a' : 'div'}>`).join('');
+</script>
+</body>
+</html>
