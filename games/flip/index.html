@@ -11,6 +11,7 @@
   gtag('js', new Date());
   gtag('config', 'G-YK8LGZ2VRJ');
 </script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3813289053308828" crossorigin="anonymous"></script>
 <script>
   (function(c,l,a,r,i,t,y){
       c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -133,10 +134,14 @@
 
   function track(name, params){ if (typeof gtag === 'function') gtag('event', name, params || {}); }
 
-  // --- Ad abstraction: swap this object for real SDK calls in production ---
+  // --- Ad abstraction: real Google Ad Placement API (H5 Games Ads) with a
+  // simulated fallback for when the AdSense account isn't approved yet /
+  // ads are blocked. Swap this object for the CrazyGames SDK on that host.
+  window.adsbygoogle = window.adsbygoogle || [];
+  if (typeof adConfig === 'function') adConfig({ preloadAdBreaks: 'on' });
+
   const Ads = {
-    show(type, seconds, done){
-      track('ad_impression', { ad_type: type });
+    simulate(type, seconds, done){
       ui.adtype.textContent = type;
       ui.admodal.style.display = 'flex';
       let t = seconds; ui.adcount.textContent = t;
@@ -145,8 +150,25 @@
         if (t <= 0){ clearInterval(iv); ui.admodal.style.display = 'none'; done(); }
       }, 1000);
     },
-    interstitial(done){ this.show('Interstitial', 3, done); },
-    rewarded(done){ this.show('Rewarded video', 4, done); }
+    interstitial(done){
+      if (typeof adBreak !== 'function') return this.simulate('Interstitial', 3, done);
+      adBreak({
+        type: 'next',
+        name: 'run-interstitial',
+        adBreakDone(){ track('ad_impression', { ad_type: 'interstitial' }); done(); }
+      });
+    },
+    rewarded(done){
+      if (typeof adBreak !== 'function') return this.simulate('Rewarded video', 4, done);
+      let rewarded = false;
+      adBreak({
+        type: 'reward',
+        name: 'run-reward',
+        beforeReward(showAdFn){ showAdFn(); },
+        adViewed(){ rewarded = true; track('ad_impression', { ad_type: 'rewarded' }); },
+        adBreakDone(){ if (rewarded) done(); }
+      });
+    }
   };
 
   // --- State ---
