@@ -125,25 +125,30 @@
     <h2>All games</h2>
     <div class="grid" id="gamegrid"></div>
   </section>
+
+  <section id="about" style="margin-bottom:56px">
+    <h2>About Nevixo</h2>
+    <p style="color:var(--muted); max-width:640px">Nevixo is a small independent studio making original browser games — no installs, no accounts, no waiting. Every game is built to load in seconds and play great with just a mouse, a keyboard, or a thumb. FLIP is live now, with HUE and TINY COSMOS in development for later in 2026.</p>
+  </section>
 </main>
 
-<footer id="about">
+<footer>
   <div class="wrap foot">
     <div>
       <strong style="color:var(--ink)">Nevixo</strong> — a small studio making original instant games for the open web.
-      <div class="news" id="contact">
-        <input type="email" placeholder="you@email.com" aria-label="Email for updates">
-        <button type="button" onclick="this.previousElementSibling.value='';this.textContent='Done ✓'">Get updates</button>
+      <div class="news">
+        <iframe data-tally-src="https://tally.so/embed/gDrpO4?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1" loading="lazy" width="100%" height="58" frameborder="0" title="Nevixo — Get updates"></iframe>
       </div>
     </div>
-    <ul>
+    <ul id="contact">
+      <li><a href="https://tally.so/r/LZyg6l" target="_blank" rel="noopener">Feedback</a></li>
       <li><a href="./privacy.html">Privacy</a></li>
       <li><a href="./terms.html">Terms</a></li>
-      <li><a href="#">For partners</a></li>
     </ul>
   </div>
   <div class="wrap" style="margin-top:18px">© 2026 Nevixo · playnevixo.com</div>
 </footer>
+<script async src="https://tally.so/widgets/embed.js"></script>
 
 <script>
   // Adding a game to the hub = adding one object here. Nothing else changes.
