@@ -68,6 +68,26 @@
   #adcount{font-size:30px; font-weight:700}
   footer{font-size:12px; color:var(--muted); max-width:760px; text-align:center; line-height:1.6}
   .hidden{display:none !important}
+
+  #skins{overflow-y:auto; justify-content:flex-start; gap:8px; padding:14px}
+  #skins h2{font-size:20px}
+  .coinbal{font-size:13px; color:var(--coin); font-weight:600}
+  .skingrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 8px; width:100%; max-width:340px}
+  .skin-card{display:flex; flex-direction:column; align-items:center; gap:4px}
+  .skin-preview{width:28px; height:28px; border-radius:50%}
+  .skin-preview.classic{background:var(--ink)}
+  .skin-preview.teal{background:var(--accent)}
+  .skin-preview.violet{background:var(--violet)}
+  .skin-preview.gold{background:var(--coin)}
+  .skin-preview.dual{background:linear-gradient(to bottom,var(--violet),var(--accent))}
+  .skin-preview.halo{background:var(--accent); box-shadow:0 0 0 3px rgba(43,228,198,.35),0 0 12px 2px rgba(43,228,198,.55)}
+  .skin-name{font-size:12px; color:var(--muted)}
+  .skin-btn{font:inherit; font-size:11px; font-weight:600; padding:5px 8px; border-radius:8px;
+    border:none; cursor:pointer; background:var(--ink); color:#0E0F13; min-width:62px}
+  .skin-btn.sel{background:var(--accent); color:#06322B}
+  .skin-btn.buy{background:var(--field); color:var(--coin); border:1px solid var(--line)}
+  .skin-btn.ad{background:transparent; color:var(--accent); border:1px solid var(--accent)}
+  .skin-btn:disabled{opacity:.4; cursor:default}
 </style>
 </head>
 <body>
@@ -91,6 +111,7 @@
     <h2>FLIP</h2>
     <p>Tap, click or press Space to flip gravity. Dodge the blocks, grab the coins, go far.</p>
     <button id="startBtn">Play</button>
+    <button id="skinsBtn" class="ghost">Skins · ◉ <span id="menuCoins">0</span></button>
   </div>
 
   <div class="panel hidden" id="over">
@@ -103,10 +124,18 @@
     <button class="reward" id="reviveBtn">▶ Watch ad to revive <span class="adtag">AD</span></button>
     <button class="reward" id="doubleBtn">▶ Double coins <span class="adtag">AD</span></button>
     <button id="againBtn">Play again</button>
+    <button id="menuBtn" class="ghost">Menu &amp; skins</button>
+  </div>
+
+  <div class="panel hidden" id="skins">
+    <h2>Skins</h2>
+    <div class="coinbal">◉ <span id="skinCoins">0</span> coins</div>
+    <div class="skingrid" id="skinGrid"></div>
+    <button id="skinBackBtn" class="ghost">Back</button>
   </div>
 </div>
 
-<footer>Monetization placeholders active: interstitial every 2nd run · rewarded revive · rewarded coin doubler.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK. Progress saving arrives with the live version.</footer>
+<footer>Monetization placeholders active: interstitial every 2nd run · rewarded revive · rewarded coin doubler · rewarded skin unlock.<br>Production build swaps these for Google H5 Games Ads / CrazyGames SDK. Coins and skins save on this device.</footer>
 
 <div id="admodal">
   <div class="frame">
@@ -129,7 +158,11 @@
     reviveBtn: document.getElementById('reviveBtn'), doubleBtn: document.getElementById('doubleBtn'),
     againBtn: document.getElementById('againBtn'), startBtn: document.getElementById('startBtn'),
     admodal: document.getElementById('admodal'), adcount: document.getElementById('adcount'),
-    adtype: document.getElementById('adtype')
+    adtype: document.getElementById('adtype'),
+    skinsBtn: document.getElementById('skinsBtn'), menuCoins: document.getElementById('menuCoins'),
+    menuBtn: document.getElementById('menuBtn'), skins: document.getElementById('skins'),
+    skinCoins: document.getElementById('skinCoins'), skinGrid: document.getElementById('skinGrid'),
+    skinBackBtn: document.getElementById('skinBackBtn')
   };
   const css = getComputedStyle(document.documentElement);
   const C = n => css.getPropertyValue(n).trim();
@@ -173,12 +206,43 @@
     }
   };
 
+  // --- Cosmetic skins ---
+  const SKINS = [
+    { id:'classic', name:'Classic', price:0 },
+    { id:'teal',    name:'Teal',    price:20,  color:'--accent' },
+    { id:'violet',  name:'Violet',  price:40,  color:'--violet' },
+    { id:'gold',    name:'Gold',    price:80,  color:'--coin' },
+    { id:'dual',    name:'Dual',    price:150 },              // gradient, signature detail
+    { id:'halo',    name:'Halo',    ad:true,   color:'--accent' } // rewarded unlock
+  ];
+
   // --- State ---
   let W = 0, H = 0, dpr = 1, pad = 12, barTh = 6;
   let state = 'menu';               // menu | playing | dead
   let ball, speed, dist, runCoins, obstacles, coinsArr, nextObst, gravDir;
   let bestDist = 0, bank = 0, runCount = 0, usedRevive = false, usedDouble = false;
-  let invincible = 0, last = 0;
+  let invincible = 0, last = 0, runBanked = false;
+  let ownedSkins = ['classic'], selectedSkin = 'classic';
+
+  const SAVE_KEY = 'flip_save';
+  function save(){
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ bank, bestDist, ownedSkins, selectedSkin })); } catch(e){}
+  }
+  function load(){
+    try {
+      const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+      if (!s) return;
+      bank = s.bank || 0;
+      bestDist = s.bestDist || 0;
+      ownedSkins = (Array.isArray(s.ownedSkins) && s.ownedSkins.length) ? s.ownedSkins : ['classic'];
+      selectedSkin = s.selectedSkin || 'classic';
+      if (!ownedSkins.includes(selectedSkin)) selectedSkin = 'classic';
+    } catch(e){}
+  }
+  function bankRun(){
+    if (runBanked) return;
+    bank += runCoins; runBanked = true; save();
+  }
 
   const BASE_SPEED = 300, MAX_SPEED = 700, ACCEL = 7;
   const GRAV = 3300, MAX_VY = 1300;
@@ -227,6 +291,7 @@
   function die(){
     state = 'dead'; runCount++;
     bestDist = Math.max(bestDist, meters());
+    save();
     track('game_over', { distance: meters(), coins: runCoins });
     ui.finalScore.textContent = meters();
     ui.finalCoins.textContent = runCoins;
@@ -293,12 +358,27 @@
     const r = ballR();
     const blink = invincible > 0 && Math.floor(invincible * 10) % 2 === 0;
     ctx.globalAlpha = blink ? 0.35 : 1;
-    ctx.fillStyle = C('--ink');
-    ctx.beginPath(); ctx.arc(ball.x, ball.y, r, 0, 7); ctx.fill();
-    ctx.fillStyle = C('--field');
-    const a = ball.rot;
-    ctx.beginPath(); ctx.arc(ball.x + Math.cos(a) * r * 0.5, ball.y + Math.sin(a) * r * 0.5, r * 0.18, 0, 7); ctx.fill();
+    drawBall(ball.x, ball.y, r, ball.rot);
     ctx.globalAlpha = 1;
+  }
+
+  function drawBall(x, y, r, rot){
+    const skin = SKINS.find(s => s.id === selectedSkin) || SKINS[0];
+    if (skin.id === 'dual'){
+      const g = ctx.createLinearGradient(x, y - r, x, y + r);
+      g.addColorStop(0, C('--violet')); g.addColorStop(1, C('--accent'));
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = C(skin.color || '--ink');
+    }
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    if (skin.id === 'halo'){
+      ctx.lineWidth = Math.max(2, r * 0.16); ctx.strokeStyle = C('--accent');
+      ctx.beginPath(); ctx.arc(x, y, r + ctx.lineWidth, 0, 7); ctx.stroke();
+    }
+    // spin indicator so rotation reads on any skin
+    ctx.fillStyle = skin.id === 'classic' ? C('--field') : 'rgba(14,15,19,.55)';
+    ctx.beginPath(); ctx.arc(x + Math.cos(rot) * r * 0.5, y + Math.sin(rot) * r * 0.5, r * 0.18, 0, 7); ctx.fill();
   }
 
   function roundRect(x, y, w, h, rr){
@@ -317,18 +397,64 @@
   }
 
   function startRun(){
-    reset(true);
-    ui.menu.classList.add('hidden'); ui.over.classList.add('hidden');
+    reset(true); runBanked = false;
+    ui.menu.classList.add('hidden'); ui.over.classList.add('hidden'); ui.skins.classList.add('hidden');
     state = 'playing';
     track('game_start');
+  }
+
+  function showMenu(){
+    reset(true);
+    ui.over.classList.add('hidden'); ui.skins.classList.add('hidden'); ui.menu.classList.remove('hidden');
+    ui.menuCoins.textContent = bank;
+    state = 'menu';
+  }
+
+  function renderSkins(){
+    ui.skinCoins.textContent = bank;
+    ui.skinGrid.innerHTML = SKINS.map(s => {
+      const owned = ownedSkins.includes(s.id);
+      const selected = selectedSkin === s.id;
+      let btn;
+      if (selected) btn = '<button class="skin-btn sel" disabled>Selected</button>';
+      else if (owned) btn = `<button class="skin-btn" data-select="${s.id}">Select</button>`;
+      else if (s.ad) btn = `<button class="skin-btn ad" data-adunlock="${s.id}">▶ Watch ad</button>`;
+      else btn = `<button class="skin-btn buy" data-buy="${s.id}" ${bank >= s.price ? '' : 'disabled'}>${s.price} ◉</button>`;
+      return `<div class="skin-card"><div class="skin-preview ${s.id}"></div><div class="skin-name">${s.name}</div>${btn}</div>`;
+    }).join('');
   }
 
   // --- Wiring ---
   ui.startBtn.addEventListener('click', startRun);
   ui.againBtn.addEventListener('click', () => {
-    bank += runCoins;
+    bankRun();
     const go = () => startRun();
     (runCount % 2 === 0) ? Ads.interstitial(go) : go();   // interstitial every 2nd run
+  });
+  ui.menuBtn.addEventListener('click', () => { bankRun(); showMenu(); });
+  ui.skinsBtn.addEventListener('click', () => {
+    renderSkins();
+    ui.menu.classList.add('hidden'); ui.skins.classList.remove('hidden');
+  });
+  ui.skinBackBtn.addEventListener('click', showMenu);
+  ui.skinGrid.addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const buy = btn.dataset.buy, sel = btn.dataset.select, ad = btn.dataset.adunlock;
+    if (sel){ selectedSkin = sel; save(); renderSkins(); }
+    else if (buy){
+      const skin = SKINS.find(s => s.id === buy);
+      if (skin && bank >= skin.price){
+        bank -= skin.price; ownedSkins.push(buy); selectedSkin = buy;
+        save(); renderSkins();
+        track('skin_unlock', { skin: buy, method: 'coins' });
+      }
+    } else if (ad){
+      Ads.rewarded(() => {
+        if (!ownedSkins.includes(ad)) ownedSkins.push(ad);
+        selectedSkin = ad; save(); renderSkins();
+        track('skin_unlock', { skin: ad, method: 'ad' });
+      });
+    }
   });
   ui.reviveBtn.addEventListener('click', () => {
     Ads.rewarded(() => {
@@ -352,8 +478,13 @@
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'playing') die(); });
   window.addEventListener('resize', resize);
+  window.addEventListener('beforeunload', () => { if (state !== 'menu') bankRun(); });
 
+  load();
   resize(); reset(true); requestAnimationFrame(loop);
+  ui.menuCoins.textContent = bank;
+  ui.coins.textContent = '◉ ' + bank;
+  ui.best.textContent = 'Best ' + bestDist + ' m';
 })();
 </script>
 </body>
