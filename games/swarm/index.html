@@ -293,6 +293,7 @@
     Sound.blip(520, 0.07, 'sine', 0.16);
     track('game_start');
     renderHud();
+    startLoop();
   }
 
   function spawnEnemy(){
@@ -526,12 +527,20 @@
     }
   }
 
-  let paused = false;
+  let paused = false, looping = false;
   function loop(ts){
     const dt = Math.min(0.033, (ts - last) / 1000 || 0);
     last = ts;
     if (state === 'playing' && !paused) update(dt);
     draw();
+    requestAnimationFrame(loop);
+  }
+  // Start the render loop on demand (from the Play gesture) so it always
+  // begins in a foreground/active tab — starting rAF at load can get throttled.
+  function startLoop(){
+    if (looping) return;
+    looping = true;
+    last = performance.now();
     requestAnimationFrame(loop);
   }
 
@@ -589,7 +598,7 @@
   load();
   resize();
   ui.finalBest.textContent = fmt(bestTime);
-  requestAnimationFrame(loop);
+  draw(); // paint the arena once behind the menu; the loop starts on Play
 })();
 </script>
 </body>
