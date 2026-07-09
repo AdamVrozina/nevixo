@@ -159,10 +159,12 @@
       try { localStorage.setItem('nevixo_muted', this.muted ? '1' : '0'); } catch(e){}
       if (btn) btn.textContent = this.muted ? '🔇' : '🔊';
     },
+    // Safari drops the context to 'interrupted' on tab switch; wake it on any interaction.
+    resume(){ if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {}); },
     tone(freq, dur, type, when, vol){
       if (this.muted) return;
       this.init(); if (!this.ctx) return;
-      if (this.ctx.state === 'suspended') this.ctx.resume();
+      if (this.ctx.state !== 'running') this.ctx.resume();
       const t0 = this.ctx.currentTime + (when || 0);
       const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
       osc.type = type || 'sine';
@@ -392,6 +394,8 @@
   Sound.loadMuted();
   ui.muteBtn.textContent = Sound.muted ? '🔇' : '🔊';
   ui.muteBtn.addEventListener('click', () => { Sound.toggle(ui.muteBtn); if (!Sound.muted) Sound.blip(600, 0.05, 'sine', 0.14); });
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, () => Sound.resume(), { passive: true }));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) Sound.resume(); });
 
   const existing = loadSave();
   if (existing){
