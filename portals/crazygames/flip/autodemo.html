@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>FLIP — auto demo (for recording)</title>
+<style>
+  :root{
+    --ink:#F2F2F5; --bg:#0E0F13; --field:#15171D; --bar:#2A2D36;
+    --accent:#2BE4C6; --violet:#8B7CFF; --coin:#FFC24B; --muted:#8A8F9C;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--bg); display:flex; align-items:center; justify-content:center; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  #stage{position:relative; width:min(92vw,900px)}
+  canvas{display:block; width:100%; border-radius:20px; background:var(--field); box-shadow:0 0 0 1px #23262E}
+  .hud{position:absolute; top:16px; left:20px; right:20px; display:flex; justify-content:space-between;
+    pointer-events:none; font-size:16px; font-weight:600; color:var(--ink)}
+  .hud .right{color:var(--muted); font-weight:500; display:flex; gap:16px}
+  .hud .coins{color:var(--coin)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game"></canvas>
+  <div class="hud">
+    <div id="score">0 m</div>
+    <div class="right"><span class="coins" id="coins">◉ 0</span><span id="best">Best 0 m</span></div>
+  </div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+  const css = getComputedStyle(document.documentElement), C = n => css.getPropertyValue(n).trim();
+  const ui = { score:document.getElementById('score'), coins:document.getElementById('coins'), best:document.getElementById('best') };
+
+  let W=0,H=0,dpr=1,pad=12,barTh=6;
+  let ball, speed, dist, runCoins, obstacles, coinsArr, nextObst, gravDir, last=0, dead=0;
+  let bestDist=0, bank=0;
+  const BASE_SPEED=300, MAX_SPEED=680, ACCEL=6.5, GRAV=3300, MAX_VY=1300;
+  window.__demo = { runs:0, best:0 };
+
+  function resize(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=canvas.clientWidth;
+    const portrait = window.innerHeight > window.innerWidth * 1.1;
+    H = portrait
+      ? Math.max(300, Math.min(Math.round(W*1.0), Math.round(window.innerHeight*0.62)))
+      : Math.max(300, Math.min(Math.round(W*0.56), Math.round(window.innerHeight*0.82)));
+    canvas.style.height=H+'px';
+    canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    if(ball){ ball.x=W*0.26; ball.y=clampY(ball.y); }
+  }
+  const floorY=()=>H-pad-barTh, ceilY=()=>pad+barTh, ballR=()=>Math.max(10,Math.round(H*0.032));
+  function clampY(y){ const r=ballR(); return Math.min(Math.max(y,ceilY()+r),floorY()-r); }
+
+  function reset(){
+    dist=0; runCoins=0; speed=BASE_SPEED; obstacles=[]; coinsArr=[]; nextObst=W*0.9; gravDir=1;
+    ball={ x:W*0.26, y:floorY()-ballR(), vy:0, rot:0 };
+  }
+  function spawnObstacle(){
+    const r=ballR(), onFloor=Math.random()<0.5, h=H*(0.14+Math.random()*0.16), w=Math.max(22,H*0.055);
+    const y=onFloor?floorY()-h:ceilY();
+    obstacles.push({ x:W+w, y, w, h, top:!onFloor });
+    const flipT=Math.sqrt(2*(floorY()-ceilY()-2*r)/GRAV);
+    nextObst=speed*(flipT+0.55+Math.random()*0.5);
+    if(Math.random()<0.4){ const cy=onFloor?ceilY()+r*2.2:floorY()-r*2.2;
+      for(let i=0;i<3;i++) coinsArr.push({ x:W+w+60+i*34, y:cy, r:Math.max(7,H*0.018), hit:false }); }
+  }
+  const flip=()=>{ gravDir*=-1; };
+  const meters=()=>Math.floor(dist/40);
+
+  // --- Bot: keep the ball on the wall opposite the next obstacle, flipping with lead time ---
+  function bot(){
+    const r=ballR();
+    let target=null;
+    for(const o of obstacles){ if(o.x+o.w > ball.x - r){ if(!target || o.x<target.x) target=o; } }
+    if(!target) return;
+    const desired = target.top ? 1 : -1;           // ceiling obstacle -> go down; floor -> go up
+    const flipT=Math.sqrt(2*(floorY()-ceilY()-2*r)/GRAV);
+    const dist2 = target.x - ball.x;
+    const lead = speed*(flipT+0.14) + target.w;
+    if(gravDir!==desired && dist2 < lead) flip();
+  }
+
+  function update(dt){
+    speed=Math.min(MAX_SPEED,speed+ACCEL*dt);
+    const dx=speed*dt; dist+=dx;
+    bot();
+    ball.vy+=GRAV*gravDir*dt; ball.vy=Math.max(-MAX_VY,Math.min(MAX_VY,ball.vy)); ball.y+=ball.vy*dt;
+    const r=ballR();
+    if(ball.y>floorY()-r){ ball.y=floorY()-r; ball.vy=0; }
+    if(ball.y<ceilY()+r){ ball.y=ceilY()+r; ball.vy=0; }
+    ball.rot+=(dx/r)*(ball.y>H/2?1:-1);
+    nextObst-=dx; if(nextObst<=0) spawnObstacle();
+    for(const o of obstacles) o.x-=dx; for(const c of coinsArr) c.x-=dx;
+    obstacles=obstacles.filter(o=>o.x+o.w>-20); coinsArr=coinsArr.filter(c=>c.x>-20&&!c.hit);
+    for(const c of coinsArr){ if(Math.hypot(c.x-ball.x,c.y-ball.y)<c.r+r){ c.hit=true; runCoins++; } }
+    for(const o of obstacles){
+      const cx=Math.max(o.x,Math.min(ball.x,o.x+o.w)), cy=Math.max(o.y,Math.min(ball.y,o.y+o.h));
+      if(Math.hypot(cx-ball.x,cy-ball.y)<r*0.92){ die(); return; }
+    }
+    ui.score.textContent=meters()+' m';
+    ui.coins.textContent='◉ '+(bank+runCoins);
+    ui.best.textContent='Best '+Math.max(bestDist,meters())+' m';
+  }
+  function die(){
+    bestDist=Math.max(bestDist,meters()); bank+=runCoins;
+    window.__demo.runs++; window.__demo.best=bestDist;
+    dead=0.55; // brief pause, then auto-restart
+  }
+  function roundRect(x,y,w,h,rr){ rr=Math.min(rr,w/2,h/2); ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=C('--bar');
+    ctx.beginPath(); roundRect(pad,pad,W-pad*2,barTh,3); ctx.fill();
+    ctx.beginPath(); roundRect(pad,H-pad-barTh,W-pad*2,barTh,3); ctx.fill();
+    for(const o of obstacles){ ctx.fillStyle=C(o.top?'--violet':'--accent'); ctx.beginPath(); roundRect(o.x,o.y,o.w,o.h,6); ctx.fill(); }
+    ctx.fillStyle=C('--coin'); for(const c of coinsArr){ ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7); ctx.fill(); }
+    const r=ballR();
+    ctx.globalAlpha = dead>0 ? 0.4 : 1;
+    ctx.fillStyle=C('--ink'); ctx.beginPath(); ctx.arc(ball.x,ball.y,r,0,7); ctx.fill();
+    ctx.fillStyle=C('--field'); const a=ball.rot;
+    ctx.beginPath(); ctx.arc(ball.x+Math.cos(a)*r*0.5,ball.y+Math.sin(a)*r*0.5,r*0.18,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  function loop(ts){
+    const dt=Math.min(0.033,(ts-last)/1000||0); last=ts;
+    if(dead>0){ dead-=dt; if(dead<=0){ reset(); } }
+    else update(dt);
+    draw(); requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', resize);
+  resize(); reset(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
