@@ -184,6 +184,13 @@
       if (btn) btn.textContent = this.muted ? '🔇' : '🔊';
     },
     resume(){ if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {}); },
+    // Safari/iOS (esp. inside an iframe) need a silent buffer played within a gesture to unlock audio.
+    unlock(){
+      this.init(); if (!this.ctx) return;
+      if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
+      if (this._unlocked) return; this._unlocked = true;
+      try { const b = this.ctx.createBuffer(1, 1, 22050), s = this.ctx.createBufferSource(); s.buffer = b; s.connect(this.ctx.destination); s.start(0); } catch(e){}
+    },
     duckForAd(on){ try { if (this.master && this.ctx) this.master.gain.setValueAtTime(on ? 0 : 0.5, this.ctx.currentTime); } catch(e){} },
     tone(freq, dur, type, when, vol){
       if (this.muted) return;
@@ -496,7 +503,7 @@
   Sound.loadMuted();
   ui.muteBtn.textContent = Sound.muted ? '🔇' : '🔊';
   ui.muteBtn.addEventListener('click', () => { Sound.toggle(ui.muteBtn); if (!Sound.muted) Sound.blip(600, 0.05, 'sine', 0.14); });
-  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, () => Sound.resume(), { passive: true }));
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, () => Sound.unlock(), { passive: true }));
 
   load();
   resize(); reset(true); requestAnimationFrame(loop);
