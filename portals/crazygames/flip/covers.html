@@ -46,45 +46,42 @@
   function coins(ctx,pts,r){ ctx.fillStyle=C.coin; pts.forEach(p=>circ(ctx,p[0],p[1],r)); }
   function block(ctx,x,y,w,h,col){ ctx.fillStyle=col; rr(ctx,x,y,w,h,w*0.22); ctx.fill(); }
 
+  function glow(ctx,x,y,r){ const g=ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,'rgba(43,228,198,.12)'); g.addColorStop(1,'rgba(43,228,198,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }
+
+  // Title-free gameplay scenes. CrazyGames overlays its own title label,
+  // and warns the top-left may be covered — so keep that corner clear.
   function drawLandscape(){
     const ctx=document.getElementById('cLand').getContext('2d'), W=1920,H=1080;
     grid(ctx,W,H); bars(ctx,W,H,64,16);
-    block(ctx,1120,H-80-230,44,230,C.accent);
-    block(ctx,1360,80,44,190,C.violet);
-    coins(ctx,[[760,460],[840,425],[920,405]],18);
-    trail(ctx,560,660,44,1); ball(ctx,560,660,44);
-    ctx.textAlign='left';
-    ctx.fillStyle=C.ink; ctx.font='800 230px '+F; ctx.fillText('FLIP',140,380);
-    ctx.fillStyle=C.muted; ctx.font='500 52px '+F; ctx.fillText('One-tap gravity arcade',150,460);
-    ctx.fillStyle=C.accent; rr(ctx,150,520,250,88,20); ctx.fill();
-    ctx.fillStyle='#06322B'; ctx.font='700 36px '+F; ctx.fillText('▶  Play',195,576);
-    ctx.fillStyle=C.accent; ctx.font='600 30px '+F; ctx.fillText('N E V I X O',150,H-110);
+    block(ctx,760,80,46,240,C.violet);
+    block(ctx,1520,80,46,180,C.violet);
+    block(ctx,1080,H-80-300,46,300,C.accent);
+    block(ctx,1660,H-80-210,46,210,C.accent);
+    coins(ctx,[[1180,600],[1260,560],[1340,536],[1420,540]],20);
+    glow(ctx,880,600,320); trail(ctx,880,600,54,1); ball(ctx,880,600,54);
+    ctx.textAlign='right'; ctx.fillStyle=C.accent; ctx.font='600 30px '+F; ctx.fillText('N E V I X O',W-90,H-70);
   }
   function drawPortrait(){
     const ctx=document.getElementById('cPort').getContext('2d'), W=800,H=1200;
     grid(ctx,W,H); bars(ctx,W,H,40,12);
-    ctx.textAlign='center';
-    ctx.fillStyle=C.ink; ctx.font='800 170px '+F; ctx.fillText('FLIP',W/2,300);
-    ctx.fillStyle=C.muted; ctx.font='500 34px '+F; ctx.fillText('One-tap gravity arcade',W/2,360);
-    block(ctx,200,640,40,180,C.accent);
-    block(ctx,560,470,40,150,C.violet);
-    coins(ctx,[[380,560],[440,535],[500,520]],16);
-    trail(ctx,360,760,40,1); ball(ctx,360,760,40);
-    ctx.fillStyle=C.accent; rr(ctx,W/2-125,960,250,84,20); ctx.fill();
-    ctx.fillStyle='#06322B'; ctx.font='700 34px '+F; ctx.textAlign='center'; ctx.fillText('▶  Play',W/2,1014);
-    ctx.fillStyle=C.accent; ctx.font='600 26px '+F; ctx.fillText('N E V I X O',W/2,H-70);
+    block(ctx,300,60,42,220,C.violet);
+    block(ctx,560,60,42,150,C.violet);
+    block(ctx,220,H-52-270,42,270,C.accent);
+    block(ctx,540,H-52-190,42,190,C.accent);
+    coins(ctx,[[360,520],[430,495],[500,485]],18);
+    glow(ctx,400,690,300); trail(ctx,400,690,50,1); ball(ctx,400,690,50);
+    ctx.textAlign='center'; ctx.fillStyle=C.accent; ctx.font='600 26px '+F; ctx.fillText('N E V I X O',W/2,H-64);
   }
   function drawSquare(){
     const ctx=document.getElementById('cSq').getContext('2d'), W=800,H=800;
     grid(ctx,W,H); bars(ctx,W,H,40,12);
-    ctx.textAlign='center';
-    ctx.fillStyle=C.ink; ctx.font='800 170px '+F; ctx.fillText('FLIP',W/2,270);
-    ctx.fillStyle=C.muted; ctx.font='500 32px '+F; ctx.fillText('One-tap gravity arcade',W/2,325);
-    block(ctx,560,390,40,120,C.violet);
-    coins(ctx,[[380,470],[440,450],[500,438]],15);
-    block(ctx,230,540,40,120,C.accent);
-    trail(ctx,360,600,40,1); ball(ctx,360,600,40);
-    ctx.fillStyle=C.accent; ctx.font='600 26px '+F; ctx.fillText('N E V I X O',W/2,H-60);
+    block(ctx,300,52,42,180,C.violet);
+    block(ctx,560,52,42,130,C.violet);
+    block(ctx,230,H-52-200,42,200,C.accent);
+    block(ctx,540,H-52-150,42,150,C.accent);
+    coins(ctx,[[360,360],[430,335],[500,325]],17);
+    glow(ctx,400,470,260); trail(ctx,400,470,46,1); ball(ctx,400,470,46);
+    ctx.textAlign='center'; ctx.fillStyle=C.accent; ctx.font='600 24px '+F; ctx.fillText('N E V I X O',W/2,H-52);
   }
   drawLandscape(); drawPortrait(); drawSquare();
 
