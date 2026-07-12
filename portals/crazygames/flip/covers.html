@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLIP — CrazyGames cover generator</title>
+<style>
+  :root{ --bg:#0E0F13; --line:#23262E; --ink:#F2F2F5; --muted:#8A8F9C; --accent:#2BE4C6; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:#08090c; color:var(--ink); padding:28px; line-height:1.5}
+  h1{font-size:22px; font-weight:700}
+  p.lead{color:var(--muted); font-size:14px; margin:6px 0 24px; max-width:680px}
+  .item{margin-bottom:34px}
+  .item h2{font-size:14px; font-weight:600; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px}
+  canvas{height:auto; border-radius:12px; border:1px solid var(--line); display:block; max-width:100%}
+  #cLand{width:640px} #cPort{width:280px} #cSq{width:360px}
+  button{font:inherit; font-size:14px; font-weight:600; border:none; cursor:pointer;
+    padding:10px 20px; border-radius:10px; background:var(--accent); color:#06322B; margin-top:12px}
+  button:active{transform:scale(.98)}
+  .all{background:var(--ink); color:#0E0F13; margin-bottom:24px}
+</style>
+</head>
+<body>
+  <h1>FLIP — cover generator for CrazyGames</h1>
+  <p class="lead">The three covers CrazyGames requires, at the exact sizes. Click to download each PNG — no cropping needed.</p>
+  <button class="all" onclick="dl('cLand','flip-cover-landscape-1920x1080.png');setTimeout(()=>dl('cPort','flip-cover-portrait-800x1200.png'),400);setTimeout(()=>dl('cSq','flip-cover-square-800x800.png'),800)">⬇ Download all 3 covers</button>
+
+  <div class="item"><h2>Landscape 16:9 — 1920×1080</h2><canvas id="cLand" width="1920" height="1080"></canvas><br><button onclick="dl('cLand','flip-cover-landscape-1920x1080.png')">⬇ Download landscape</button></div>
+  <div class="item"><h2>Portrait 2:3 — 800×1200</h2><canvas id="cPort" width="800" height="1200"></canvas><br><button onclick="dl('cPort','flip-cover-portrait-800x1200.png')">⬇ Download portrait</button></div>
+  <div class="item"><h2>Square 1:1 — 800×800</h2><canvas id="cSq" width="800" height="800"></canvas><br><button onclick="dl('cSq','flip-cover-square-800x800.png')">⬇ Download square</button></div>
+
+<script>
+  const C = { bg:'#0E0F13', bar:'#2A2D36', line:'#23262E', ink:'#F2F2F5', muted:'#8A8F9C', accent:'#2BE4C6', violet:'#8B7CFF', coin:'#FFC24B' };
+  const F = 'BlinkMacSystemFont,-apple-system,"Segoe UI",Roboto,sans-serif';
+
+  function rr(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function circ(ctx,x,y,r){ ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }
+  function grid(ctx,W,H){ ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,.03)'; ctx.lineWidth=1; ctx.beginPath();
+    const g=Math.round(W/18); for(let x=g;x<W;x+=g){ctx.moveTo(x,0);ctx.lineTo(x,H);} for(let y=g;y<H;y+=g){ctx.moveTo(0,y);ctx.lineTo(W,y);} ctx.stroke(); }
+  function bars(ctx,W,H,pad,th){ ctx.fillStyle=C.bar; rr(ctx,pad,pad,W-pad*2,th,th/2); ctx.fill(); rr(ctx,pad,H-pad-th,W-pad*2,th,th/2); ctx.fill(); }
+  function ball(ctx,x,y,r){ ctx.fillStyle=C.ink; circ(ctx,x,y,r); ctx.fillStyle='rgba(14,15,19,.5)'; circ(ctx,x+r*0.5,y-r*0.2,r*0.18); }
+  function trail(ctx,x,y,r,dir){ for(let i=4;i>=1;i--){ctx.globalAlpha=i*0.06; ctx.fillStyle=C.ink; circ(ctx,x-dir*i*r*1.1,y,r);} ctx.globalAlpha=1; }
+  function coins(ctx,pts,r){ ctx.fillStyle=C.coin; pts.forEach(p=>circ(ctx,p[0],p[1],r)); }
+  function block(ctx,x,y,w,h,col){ ctx.fillStyle=col; rr(ctx,x,y,w,h,w*0.22); ctx.fill(); }
+
+  function drawLandscape(){
+    const ctx=document.getElementById('cLand').getContext('2d'), W=1920,H=1080;
+    grid(ctx,W,H); bars(ctx,W,H,64,16);
+    block(ctx,1120,H-80-230,44,230,C.accent);
+    block(ctx,1360,80,44,190,C.violet);
+    coins(ctx,[[760,460],[840,425],[920,405]],18);
+    trail(ctx,560,660,44,1); ball(ctx,560,660,44);
+    ctx.textAlign='left';
+    ctx.fillStyle=C.ink; ctx.font='800 230px '+F; ctx.fillText('FLIP',140,380);
+    ctx.fillStyle=C.muted; ctx.font='500 52px '+F; ctx.fillText('One-tap gravity arcade',150,460);
+    ctx.fillStyle=C.accent; rr(ctx,150,520,250,88,20); ctx.fill();
+    ctx.fillStyle='#06322B'; ctx.font='700 36px '+F; ctx.fillText('▶  Play',195,576);
+    ctx.fillStyle=C.accent; ctx.font='600 30px '+F; ctx.fillText('N E V I X O',150,H-110);
+  }
+  function drawPortrait(){
+    const ctx=document.getElementById('cPort').getContext('2d'), W=800,H=1200;
+    grid(ctx,W,H); bars(ctx,W,H,40,12);
+    ctx.textAlign='center';
+    ctx.fillStyle=C.ink; ctx.font='800 170px '+F; ctx.fillText('FLIP',W/2,300);
+    ctx.fillStyle=C.muted; ctx.font='500 34px '+F; ctx.fillText('One-tap gravity arcade',W/2,360);
+    block(ctx,200,640,40,180,C.accent);
+    block(ctx,560,470,40,150,C.violet);
+    coins(ctx,[[380,560],[440,535],[500,520]],16);
+    trail(ctx,360,760,40,1); ball(ctx,360,760,40);
+    ctx.fillStyle=C.accent; rr(ctx,W/2-125,960,250,84,20); ctx.fill();
+    ctx.fillStyle='#06322B'; ctx.font='700 34px '+F; ctx.textAlign='center'; ctx.fillText('▶  Play',W/2,1014);
+    ctx.fillStyle=C.accent; ctx.font='600 26px '+F; ctx.fillText('N E V I X O',W/2,H-70);
+  }
+  function drawSquare(){
+    const ctx=document.getElementById('cSq').getContext('2d'), W=800,H=800;
+    grid(ctx,W,H); bars(ctx,W,H,40,12);
+    ctx.textAlign='center';
+    ctx.fillStyle=C.ink; ctx.font='800 170px '+F; ctx.fillText('FLIP',W/2,270);
+    ctx.fillStyle=C.muted; ctx.font='500 32px '+F; ctx.fillText('One-tap gravity arcade',W/2,325);
+    block(ctx,560,390,40,120,C.violet);
+    coins(ctx,[[380,470],[440,450],[500,438]],15);
+    block(ctx,230,540,40,120,C.accent);
+    trail(ctx,360,600,40,1); ball(ctx,360,600,40);
+    ctx.fillStyle=C.accent; ctx.font='600 26px '+F; ctx.fillText('N E V I X O',W/2,H-60);
+  }
+  drawLandscape(); drawPortrait(); drawSquare();
+
+  function dl(id,name){ document.getElementById(id).toBlob(b=>{ const a=document.createElement('a');
+    a.href=URL.createObjectURL(b); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); },'image/png'); }
+</script>
+</body>
+</html>
